@@ -1,0 +1,950 @@
+<!doctype html>
+<html lang="th" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>เกมจับคู่สารอาหาร 5 ด่าน</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Kanit', sans-serif; }
+    
+    html, body { height: 100%; overscroll-behavior-y: contain; }
+    
+    h1 { font-size: clamp(2rem, 6vw, 3rem); font-weight: 900; letter-spacing: 0.05em; text-shadow: 2px 2px 0px rgba(0,0,0,0.1); color: #ffffff; }
+    h2 { font-size: clamp(1.5rem, 5vw, 2.5rem); font-weight: 800; color: #000000; }
+    h3 { font-size: clamp(1.2rem, 4vw, 2rem); font-weight: 700; color: #000000; }
+    p { font-size: clamp(1rem, 3vw, 1.2rem); line-height: 1.6; color: #000000; font-weight: 600; }
+    
+    body { color: #000000; }
+    button { font-size: clamp(1rem, 4vw, 1.2rem); font-weight: 600; }
+    label { font-size: clamp(1rem, 4vw, 1.2rem); font-weight: 600; }
+    input, select { font-size: clamp(1rem, 4vw, 1.2rem); }
+    
+    .food-item {
+      cursor: grab;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      user-select: none;
+      touch-action: none; /* ป้องกันการเลื่อนหน้าจอเวลาลากบนมือถือ */
+      min-width: fit-content;
+      z-index: 10;
+    }
+    
+    .food-item span:first-child { font-size: clamp(32px, 8vw, 48px); }
+    .food-item span:last-child { font-size: clamp(1rem, 4vw, 1.5rem); font-weight: 700; color: #4b5563; }
+    
+    .food-item:active { cursor: grabbing; }
+    
+    .food-item.dragging {
+      opacity: 0.5;
+      transform: scale(1.05) !important;
+      z-index: 1000;
+    }
+    
+    .touch-clone {
+      position: fixed !important;
+      z-index: 9999 !important;
+      pointer-events: none !important; /* จำเป็นมากสำหรับมือถือ เพื่อให้กดทะลุไปโดนกล่องเป้าหมาย */
+      transform: scale(1.1) rotate(5deg) !important;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      opacity: 0.9;
+      margin: 0 !important;
+    }
+    
+    .drop-zone { transition: all 0.3s ease; }
+    .drop-zone.drag-over {
+      transform: scale(1.02);
+      box-shadow: 0 0 20px rgba(255,255,255,0.8);
+      border-color: #ffffff;
+    }
+    
+    .matched { animation: matchSuccess 0.5s ease; }
+    @keyframes matchSuccess {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+    
+    .wrong-match { animation: wrongShake 0.5s ease; }
+    @keyframes wrongShake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-10px); }
+      75% { transform: translateX(10px); }
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+    .floating { animation: float 3s ease-in-out infinite; }
+    
+    @keyframes confetti {
+      0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(-100px) rotate(720deg); opacity: 0; }
+    }
+    .confetti {
+      position: absolute;
+      animation: confetti 1s ease-out forwards;
+      pointer-events: none;
+      z-index: 50;
+    }
+    
+    .category-card { backdrop-filter: blur(10px); }
+    .progress-bar { transition: width 0.5s ease; }
+    body { box-sizing: border-box; }
+  </style>
+</head>
+<body class="h-full overflow-auto p-2 sm:p-4" style="background: url('https://img2.pic.in.th/Gemini_Generated_Image_iyz9ykiyz9ykiyz9.png') center/cover no-repeat fixed;">
+  <div id="app-wrapper" class="w-full h-full relative">
+    
+    <!-- WELCOME MODAL - Start Screen -->
+    <div id="welcome-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+      <div class="bg-gradient-to-b from-emerald-400 to-teal-400 rounded-3xl sm:rounded-4xl p-6 sm:p-10 max-w-xl w-full my-4 shadow-2xl">
+        <div class="text-center mb-6 sm:mb-8 leading-tight">
+          <h1 id="game-title-welcome" class="text-5xl sm:text-7xl font-black mb-1 drop-shadow-lg text-black">🍎 เกมจับคู่</h1>
+          <h1 class="text-4xl sm:text-6xl font-black mb-4 drop-shadow-lg text-white">สารอาหาร 🥗</h1>
+          <p class="text-xl sm:text-3xl text-yellow-200 font-bold drop-shadow">5 ด่าน ท้าทายความรู้สารอาหาร</p>
+        </div>
+        
+        <div class="bg-white/90 rounded-2xl p-4 sm:p-6 mb-6 space-y-4 shadow-inner">
+          <h2 class="text-3xl sm:text-4xl font-bold text-emerald-600 flex items-center gap-2 mb-2">📋 กติกาเกม</h2>
+          <ul class="space-y-3 text-base sm:text-xl text-gray-700">
+            <li class="flex gap-3 items-start"><span class="text-2xl sm:text-3xl flex-shrink-0">✅</span> <span><strong>ลากอาหาร</strong> ไปวางในหมวดหมู่ที่ถูกต้อง</span></li>
+            <li class="flex gap-3 items-start"><span class="text-2xl sm:text-3xl flex-shrink-0">⭐</span> <span><strong>ตอบถูก:</strong> +10 คะแนน (โบนัสเวลา x5 เมื่อจบด่าน)</span></li>
+            <li class="flex gap-3 items-start"><span class="text-2xl sm:text-3xl flex-shrink-0">❌</span> <span><strong>ตอบผิด:</strong> หัก 5 คะแนน, หักเวลา 1 วินาที</span></li>
+            <li class="flex gap-3 items-start"><span class="text-2xl sm:text-3xl flex-shrink-0">⏱️</span> <span><strong>เวลา:</strong> 30 วินาทีต่อด่าน</span></li>
+            <li class="flex gap-3 items-start"><span class="text-2xl sm:text-3xl flex-shrink-0">🎯</span> <span><strong>เป้าหมาย:</strong> จับคู่ 10 อาหารให้ครบทุกด่าน</span></li>
+          </ul>
+        </div>
+        
+        <form id="player-form" class="space-y-5 mb-6">
+          <div>
+            <label class="block text-white font-bold mb-2 text-xl sm:text-2xl">👤 ชื่อ - นามสกุล</label> 
+            <input type="text" id="player-name" placeholder="กรอกชื่อของคุณ" class="w-full px-4 py-4 border-2 border-transparent rounded-lg focus:outline-none focus:border-white focus:ring-4 focus:ring-emerald-300 text-xl sm:text-2xl shadow-sm" required>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-white font-bold mb-2 text-xl sm:text-2xl">📚 ชั้นเรียน</label> 
+              <select id="player-class" class="w-full px-4 py-4 border-2 border-transparent rounded-lg focus:outline-none focus:border-white focus:ring-4 focus:ring-emerald-300 text-xl sm:text-2xl shadow-sm" required> 
+                <option value="">-- เลือกชั้น --</option> 
+                <option value="ป.1">ป.1</option> <option value="ป.2">ป.2</option> <option value="ป.3">ป.3</option> 
+                <option value="ป.4">ป.4</option> <option value="ป.5">ป.5</option> <option value="ป.6">ป.6</option> 
+              </select>
+            </div>
+            <div>
+              <label class="block text-white font-bold mb-2 text-xl sm:text-2xl">🔢 เลขที่</label> 
+              <input type="number" id="player-number" placeholder="เลขที่" class="w-full px-4 py-4 border-2 border-transparent rounded-lg focus:outline-none focus:border-white focus:ring-4 focus:ring-emerald-300 text-xl sm:text-2xl shadow-sm" min="1" max="50" required>
+            </div>
+          </div>
+          <button type="submit" class="w-full bg-gradient-to-r from-yellow-400 to-orange-400 text-white px-8 py-5 mt-6 rounded-xl font-bold text-2xl sm:text-3xl hover:shadow-xl transition-all transform hover:scale-105 flex items-center justify-center gap-3 border-b-4 border-orange-500 active:border-b-0 active:translate-y-1"> 
+            <span class="text-4xl">🎮</span> เริ่มเล่นเกม 
+          </button> 
+        </form>
+        <div class="text-center mt-4">
+          <button id="open-info-btn" type="button" class="text-white/90 hover:text-white underline font-bold text-xl sm:text-2xl">ดูข้อมูลสารอาหารเพิ่มเติม 📚</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- INFO MODAL - Game Information -->
+    <div id="info-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center z-[60] p-4 overflow-y-auto">
+      <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-2xl w-full my-4 shadow-2xl relative">
+        <button id="close-info-btn" class="absolute top-4 right-4 text-3xl text-gray-400 hover:text-gray-600 transition-colors w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100">✕</button>
+        <h2 class="text-2xl sm:text-3xl font-bold text-emerald-600 mb-6 flex items-center gap-2">📚 ข้อมูลสารอาหาร 5 หมู่</h2>
+        
+        <div class="space-y-4 max-h-[60vh] overflow-y-auto pr-2 pb-4">
+          <div class="bg-red-50 rounded-xl p-4 border-2 border-red-200">
+            <h3 class="text-lg sm:text-xl font-bold text-red-600 mb-1 flex items-center gap-2"><span>🥩</span> โปรตีน (Protein)</h3>
+            <p class="text-sm sm:text-base text-gray-700"><strong>ประโยชน์:</strong> ช่วยเสริมสร้างการเจริญเติบโตและซ่อมแซมเนื้อเยื่อ</p>
+            <p class="text-xs sm:text-sm text-gray-600 mt-1"><strong>ตัวอย่าง:</strong> เนื้อสัตว์ ไข่ นม ถั่ว</p>
+          </div>
+          <div class="bg-amber-50 rounded-xl p-4 border-2 border-amber-200">
+            <h3 class="text-lg sm:text-xl font-bold text-amber-600 mb-1 flex items-center gap-2"><span>🍚</span> คาร์โบไฮเดรต (Carbohydrate)</h3>
+            <p class="text-sm sm:text-base text-gray-700"><strong>ประโยชน์:</strong> เป็นแหล่งพลังงานหลักให้ร่างกาย</p>
+            <p class="text-xs sm:text-sm text-gray-600 mt-1"><strong>ตัวอย่าง:</strong> ข้าว ขนมปัง เส้นก๋วยเตี๋ยว มันเทศ</p>
+          </div>
+          <div class="bg-orange-50 rounded-xl p-4 border-2 border-orange-200">
+            <h3 class="text-lg sm:text-xl font-bold text-orange-600 mb-1 flex items-center gap-2"><span>🥑</span> ไขมัน (Fat)</h3>
+            <p class="text-sm sm:text-base text-gray-700"><strong>ประโยชน์:</strong> ให้พลังงานสูง และช่วยดูดซึมวิตามิน</p>
+            <p class="text-xs sm:text-sm text-gray-600 mt-1"><strong>ตัวอย่าง:</strong> น้ำมัน เนยแท้ ชีส กะทิ</p>
+          </div>
+          <div class="bg-green-50 rounded-xl p-4 border-2 border-green-200">
+            <h3 class="text-lg sm:text-xl font-bold text-green-600 mb-1 flex items-center gap-2"><span>🍊</span> วิตามิน (Vitamin)</h3>
+            <p class="text-sm sm:text-base text-gray-700"><strong>ประโยชน์:</strong> ควบคุมการทำงานของอวัยวะและสร้างภูมิคุ้มกัน</p>
+            <p class="text-xs sm:text-sm text-gray-600 mt-1"><strong>ตัวอย่าง:</strong> ผลไม้ต่างๆ เช่น ส้ม มะม่วง กล้วย สับปะรด</p>
+          </div>
+          <div class="bg-blue-50 rounded-xl p-4 border-2 border-blue-200">
+            <h3 class="text-lg sm:text-xl font-bold text-blue-600 mb-1 flex items-center gap-2"><span>🦴</span> เกลือแร่ (Minerals)</h3>
+            <p class="text-sm sm:text-base text-gray-700"><strong>ประโยชน์:</strong> เสริมสร้างความแข็งแรงของกระดูกและฟัน</p>
+            <p class="text-xs sm:text-sm text-gray-600 mt-1"><strong>ตัวอย่าง:</strong> ผักบุ้ง บรอกโคลี แครอท มะเขือเทศ</p>
+          </div>
+          <div class="bg-cyan-50 rounded-xl p-4 border-2 border-cyan-200">
+            <h3 class="text-lg sm:text-xl font-bold text-cyan-600 mb-1 flex items-center gap-2"><span>💧</span> น้ำ (Water)</h3>
+            <p class="text-sm sm:text-base text-gray-700"><strong>ประโยชน์:</strong> เป็นส่วนประกอบสำคัญของเซลล์และควบคุมอุณหภูมิ</p>
+            <p class="text-xs sm:text-sm text-gray-600 mt-1"><strong>ตัวอย่าง:</strong> น้ำเปล่า</p>
+          </div>
+        </div>
+        <div class="mt-6">
+          <button id="close-info-menu-btn" class="w-full bg-gray-800 hover:bg-gray-900 text-white px-6 py-3 rounded-xl font-bold transition-all text-lg"> เข้าใจแล้ว ปิดหน้าต่างนี้ </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN STAGE CONTAINER -->
+    <div id="stage-container" class="hidden min-h-full flex flex-col pb-10">
+      <header class="text-center mb-3 sm:mb-6 pt-2">
+        <h1 id="game-title" class="font-bold text-white drop-shadow-lg mb-2 leading-tight">
+          <span class="block text-4xl sm:text-5xl mb-1">🍎 เกมจับคู่</span>
+          <span class="block text-3xl sm:text-4xl text-yellow-200">สารอาหาร 🥗</span>
+        </h1>
+        <div class="bg-white/80 backdrop-blur-md rounded-xl sm:rounded-2xl p-2 sm:p-4 inline-block shadow-lg border-2 border-white/50">
+          <p class="text-emerald-700 text-lg sm:text-2xl font-black">ด่าน <span id="current-stage" class="text-2xl sm:text-3xl">1</span> <span class="text-gray-500">/ 5</span></p>
+          <p id="instruction-text" class="text-gray-800 text-sm sm:text-lg font-medium">ลากอาหารด้านล่างไปวางในหมวดหมู่ที่ถูกต้องให้ครบ 10 อย่าง</p>
+        </div>
+      </header>
+      
+      <!-- Stats Area -->
+      <div class="max-w-4xl mx-auto mb-3 sm:mb-4 w-full">
+        <div class="bg-white/90 backdrop-blur-sm rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-xl border-b-4 border-gray-200">
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4 mb-3">
+            <div class="flex items-center gap-3 bg-yellow-50 p-2 rounded-lg border border-yellow-200">
+              <span class="text-3xl sm:text-4xl">⭐</span>
+              <div><span class="text-gray-600 text-xs sm:text-sm font-bold block">คะแนนรวม</span><span class="text-yellow-600 font-black text-xl sm:text-2xl" id="score">0</span></div>
+            </div>
+            <div class="flex items-center gap-3 bg-blue-50 p-2 rounded-lg border border-blue-200">
+              <span class="text-3xl sm:text-4xl">⏱️</span>
+              <div><span class="text-gray-600 text-xs sm:text-sm font-bold block">เวลาเหลือ</span><span class="text-blue-600 font-black text-xl sm:text-2xl" id="timer">30</span><span class="text-sm font-bold text-blue-600 ml-1">วิ</span></div>
+            </div>
+            <button id="reset-btn" class="col-span-2 sm:col-span-1 bg-red-100 hover:bg-red-200 text-red-700 px-3 py-2 rounded-lg font-bold transition-all flex items-center justify-center gap-2 border border-red-200"> 
+              <i data-lucide="refresh-cw" class="w-5 h-5"></i> เริ่มด่านนี้ใหม่ 
+            </button>
+          </div>
+          <div class="bg-gray-200 rounded-full h-4 sm:h-6 overflow-hidden relative">
+            <div id="progress-bar" class="progress-bar bg-gradient-to-r from-emerald-400 to-teal-500 h-full rounded-full w-0"></div>
+            <div class="absolute inset-0 flex items-center justify-center text-xs font-bold text-gray-800 mix-blend-overlay drop-shadow-md"><span id="matched-count">0</span> / 10</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Drop Zones -->
+      <div class="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-4 mb-4 w-full flex-grow">
+        <div class="drop-zone category-card bg-red-500/90 rounded-xl p-2 sm:p-4 border-4 border-red-300 shadow-lg flex flex-col" data-category="protein">
+          <div class="text-center mb-2 pointer-events-none"><span class="text-4xl sm:text-6xl block mb-1">🥩</span><h3 class="text-white font-black text-lg sm:text-2xl drop-shadow-md">โปรตีน</h3></div>
+          <div class="matched-items flex-grow bg-black/10 rounded-lg p-1 sm:p-2 flex flex-wrap gap-1 content-start min-h-[60px]"></div>
+        </div>
+        <div class="drop-zone category-card bg-amber-500/90 rounded-xl p-2 sm:p-4 border-4 border-amber-300 shadow-lg flex flex-col" data-category="carbohydrate">
+          <div class="text-center mb-2 pointer-events-none"><span class="text-4xl sm:text-6xl block mb-1">🍚</span><h3 class="text-white font-black text-lg sm:text-2xl drop-shadow-md">คาร์โบไฮเดรต</h3></div>
+          <div class="matched-items flex-grow bg-black/10 rounded-lg p-1 sm:p-2 flex flex-wrap gap-1 content-start min-h-[60px]"></div>
+        </div>
+        <div class="drop-zone category-card bg-orange-500/90 rounded-xl p-2 sm:p-4 border-4 border-orange-300 shadow-lg flex flex-col" data-category="fat">
+          <div class="text-center mb-2 pointer-events-none"><span class="text-4xl sm:text-6xl block mb-1">🥑</span><h3 class="text-white font-black text-lg sm:text-2xl drop-shadow-md">ไขมัน</h3></div>
+          <div class="matched-items flex-grow bg-black/10 rounded-lg p-1 sm:p-2 flex flex-wrap gap-1 content-start min-h-[60px]"></div>
+        </div>
+        <div class="drop-zone category-card bg-green-500/90 rounded-xl p-2 sm:p-4 border-4 border-green-300 shadow-lg flex flex-col" data-category="vitamin">
+          <div class="text-center mb-2 pointer-events-none"><span class="text-4xl sm:text-6xl block mb-1">🍊</span><h3 class="text-white font-black text-lg sm:text-2xl drop-shadow-md">วิตามิน</h3></div>
+          <div class="matched-items flex-grow bg-black/10 rounded-lg p-1 sm:p-2 flex flex-wrap gap-1 content-start min-h-[60px]"></div>
+        </div>
+        <div class="drop-zone category-card bg-blue-500/90 rounded-xl p-2 sm:p-4 border-4 border-blue-300 shadow-lg flex flex-col" data-category="mineral">
+          <div class="text-center mb-2 pointer-events-none"><span class="text-4xl sm:text-6xl block mb-1">🦴</span><h3 class="text-white font-black text-lg sm:text-2xl drop-shadow-md">เกลือแร่</h3></div>
+          <div class="matched-items flex-grow bg-black/10 rounded-lg p-1 sm:p-2 flex flex-wrap gap-1 content-start min-h-[60px]"></div>
+        </div>
+        <div class="drop-zone category-card bg-cyan-500/90 rounded-xl p-2 sm:p-4 border-4 border-cyan-300 shadow-lg flex flex-col" data-category="water">
+          <div class="text-center mb-2 pointer-events-none"><span class="text-4xl sm:text-6xl block mb-1">💧</span><h3 class="text-white font-black text-lg sm:text-2xl drop-shadow-md">น้ำ</h3></div>
+          <div class="matched-items flex-grow bg-black/10 rounded-lg p-1 sm:p-2 flex flex-wrap gap-1 content-start min-h-[60px]"></div>
+        </div>
+      </div>
+      
+      <!-- Draggable Food Items Container -->
+      <div class="max-w-6xl mx-auto w-full mt-auto">
+        <div class="bg-white/90 backdrop-blur-md rounded-t-2xl sm:rounded-2xl p-4 shadow-[0_-10px_20px_rgba(0,0,0,0.1)] border-t-4 border-gray-200 min-h-[150px]">
+          <h3 class="text-gray-800 font-bold text-center mb-3 flex items-center justify-center gap-2 text-lg">
+            <i data-lucide="hand" class="w-6 h-6 text-emerald-600"></i> ลากรายการอาหารด้านล่างนี้
+          </h3>
+          <div id="food-container" class="flex flex-wrap gap-2 sm:gap-3 justify-center">
+            <!-- Food items will be generated here -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STAGE COMPLETE MODAL -->
+    <div id="stage-complete-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+      <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full text-center transform scale-95 transition-transform duration-300 shadow-2xl relative overflow-hidden" id="stage-complete-content">
+        <div class="absolute -top-10 -right-10 w-32 h-32 bg-yellow-300 rounded-full opacity-50 blur-2xl"></div>
+        <div class="text-6xl sm:text-7xl mb-4 animate-bounce">🎉</div>
+        <h2 class="text-3xl sm:text-4xl font-black text-emerald-600 mb-2 drop-shadow-sm">ด่าน <span id="completed-stage">1</span> สำเร็จ!</h2>
+        <div class="bg-gray-50 rounded-xl p-4 mb-6 border border-gray-100">
+          <p class="text-gray-600 mb-1 font-semibold text-lg">คะแนนด่านนี้</p>
+          <p class="text-5xl font-black text-amber-500 drop-shadow-sm mb-2" id="stage-score">0</p>
+          <p class="text-sm text-emerald-600 font-bold" id="time-bonus-text">+ โบนัสเวลา <span id="time-bonus-val">0</span></p>
+        </div>
+        <button id="next-stage-btn" class="w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-6 py-4 rounded-xl font-bold text-xl hover:shadow-lg transition-all border-b-4 border-teal-700 active:border-b-0 active:translate-y-1"> ➡️ ไปด่านถัดไป </button>
+      </div>
+    </div>
+
+    <!-- TIMEOUT MODAL -->
+    <div id="timeout-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+      <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full text-center shadow-2xl">
+        <div class="text-6xl sm:text-7xl mb-4 animate-pulse">⏰</div>
+        <h2 class="text-3xl sm:text-4xl font-black text-red-600 mb-2">หมดเวลาแล้ว!</h2>
+        <div class="bg-red-50 rounded-xl p-4 mb-6 border border-red-100">
+          <p class="text-red-800 font-bold text-lg mb-2">จับคู่ได้ <span id="timeout-matched" class="text-2xl">0</span> / 10</p>
+          <p class="text-gray-600 font-semibold">คะแนนที่ได้: <span class="text-2xl font-black text-amber-500" id="timeout-score">0</span></p>
+        </div>
+        <button id="timeout-retry-btn" class="w-full bg-gradient-to-r from-red-500 to-orange-500 text-white px-6 py-4 rounded-xl font-bold text-xl hover:shadow-lg transition-all border-b-4 border-red-700 active:border-b-0 active:translate-y-1 flex items-center justify-center gap-2"> 
+          <i data-lucide="rotate-ccw"></i> ลองเล่นด่านนี้ใหม่ 
+        </button>
+      </div>
+    </div>
+
+    <!-- FINAL SUMMARY MODAL -->
+    <div id="final-summary-modal" class="fixed inset-0 bg-black/70 backdrop-blur-md hidden items-center justify-center z-[100] p-2 sm:p-4 overflow-y-auto">
+      <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-3xl w-full my-4 shadow-2xl relative">
+        <div class="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-yellow-300/30 to-transparent rounded-t-3xl pointer-events-none"></div>
+        <div class="text-center mb-6 sm:mb-8 relative z-10">
+          <div class="text-6xl sm:text-8xl mb-2 sm:mb-4 animate-bounce">🏆</div>
+          <h2 class="text-3xl sm:text-5xl font-black text-emerald-600 mb-1 drop-shadow-sm">ยอดเยี่ยมมาก!</h2>
+          <p class="text-gray-700 font-bold text-lg sm:text-xl" id="final-player-name">คุณเล่นจบ 5 ด่านสำเร็จ</p>
+          <div class="mt-4 inline-block bg-yellow-50 px-8 py-4 rounded-2xl border-2 border-yellow-400 shadow-inner">
+            <p class="text-gray-600 font-bold mb-1">คะแนนรวมทั้งหมด</p>
+            <p class="text-5xl sm:text-6xl font-black text-amber-500 drop-shadow-md"><span id="total-final-score">0</span></p>
+          </div>
+        </div>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+          <div class="bg-blue-50 rounded-2xl p-4 border border-blue-200">
+            <h3 class="text-lg font-bold text-blue-800 mb-3 flex items-center gap-2"><i data-lucide="bar-chart-2"></i> สถิติรวม</h3>
+            <div class="space-y-2 text-gray-700 font-medium">
+              <p class="flex justify-between"><span>เวลาที่ใช้ทั้งหมด:</span> <span class="font-bold text-blue-600"><span id="total-time">0</span> วินาที</span></p>
+              <p class="flex justify-between"><span>เวลาเฉลี่ยต่อด่าน:</span> <span class="font-bold text-blue-600"><span id="avg-time">0</span> วินาที</span></p>
+            </div>
+          </div>
+          <div class="bg-purple-50 rounded-2xl p-4 border border-purple-200">
+            <h3 class="text-lg font-bold text-purple-800 mb-3 flex items-center gap-2"><i data-lucide="list-ordered"></i> สรุปรายด่าน</h3>
+            <div id="stage-breakdown" class="space-y-1 text-sm font-medium text-gray-700 h-[80px] overflow-y-auto pr-1 custom-scrollbar">
+              <!-- Stage breakdown JS inject -->
+            </div>
+          </div>
+        </div>
+        
+        <button id="final-close-btn" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-6 py-4 rounded-xl font-bold text-xl hover:shadow-xl transition-all transform hover:-translate-y-1 border-b-4 border-teal-800 active:border-b-0 active:translate-y-0 flex justify-center items-center gap-2"> 
+          <i data-lucide="home"></i> กลับสู่หน้าเริ่มต้น 
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Initialize Lucide Icons
+    lucide.createIcons();
+
+    // --- Audio System ---
+    let audioContext = null;
+    
+    function initAudio() {
+      if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioContext.state === 'suspended') {
+        audioContext.resume();
+      }
+    }
+
+    function playSound(frequency, duration, type = 'sine', volume = 0.3) {
+      if (!audioContext) return;
+      try {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        oscillator.type = type;
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        oscillator.frequency.value = frequency;
+        gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + duration);
+      } catch (e) { console.error("Audio error:", e); }
+    }
+    
+    function playSuccessSound() {
+      playSound(523.25, 0.1, 'sine', 0.2); // C5
+      setTimeout(() => playSound(659.25, 0.1, 'sine', 0.2), 100); // E5
+      setTimeout(() => playSound(783.99, 0.15, 'sine', 0.2), 200); // G5
+    }
+    
+    function playErrorSound() {
+      playSound(300, 0.2, 'sawtooth', 0.1);
+      setTimeout(() => playSound(250, 0.3, 'sawtooth', 0.1), 150);
+    }
+    
+    function playWinStageSound() {
+      playSound(440, 0.1, 'square', 0.1);
+      setTimeout(() => playSound(554.37, 0.1, 'square', 0.1), 100);
+      setTimeout(() => playSound(659.25, 0.1, 'square', 0.1), 200);
+      setTimeout(() => playSound(880, 0.4, 'square', 0.1), 300);
+    }
+
+    // --- Data ---
+    const allFoods = [
+      // Protein
+      { name: 'เนื้อหมู', emoji: '🐷', category: 'protein' },
+      { name: 'เนื้อไก่', emoji: '🍗', category: 'protein' },
+      { name: 'เนื้อวัว', emoji: '🥩', category: 'protein' },
+      { name: 'เนื้อปลา', emoji: '🐟', category: 'protein' },
+      { name: 'ไข่ไก่', emoji: '🥚', category: 'protein' },
+      { name: 'ไข่เป็ด', emoji: '🦆', category: 'protein' },
+      { name: 'ไข่นกกระทา', emoji: '🥚', category: 'protein' },
+      { name: 'นมวัว', emoji: '🥛', category: 'protein' },
+      { name: 'นมถั่วเหลือง', emoji: '🥛', category: 'protein' },
+      { name: 'ถั่วเหลือง', emoji: '🫘', category: 'protein' },
+      { name: 'ถั่วเขียว', emoji: '🫘', category: 'protein' },
+      { name: 'ถั่วลิสง', emoji: '🥜', category: 'protein' },
+      { name: 'เต้าหู้', emoji: '🍲', category: 'protein' },
+      
+      // Carbohydrate
+      { name: 'ข้าวเจ้า', emoji: '🍚', category: 'carbohydrate' },
+      { name: 'ข้าวเหนียว', emoji: '🍚', category: 'carbohydrate' },
+      { name: 'ข้าวกล้อง', emoji: '🍚', category: 'carbohydrate' },
+      { name: 'ขนมปัง', emoji: '🍞', category: 'carbohydrate' },
+      { name: 'เส้นก๋วยเตี๋ยว', emoji: '🍜', category: 'carbohydrate' },
+      { name: 'มักกะโรนี', emoji: '🍝', category: 'carbohydrate' },
+      { name: 'เผือก', emoji: '🥔', category: 'carbohydrate' },
+      { name: 'มันเทศ', emoji: '🍠', category: 'carbohydrate' },
+      { name: 'มันฝรั่ง', emoji: '🥔', category: 'carbohydrate' },
+      { name: 'น้ำตาล', emoji: '🍯', category: 'carbohydrate' },
+      { name: 'น้ำผึ้ง', emoji: '🍯', category: 'carbohydrate' },
+      
+      // Fat & Oil
+      { name: 'น้ำมันหมู', emoji: '🧈', category: 'fat' },
+      { name: 'เนยแท้', emoji: '🧈', category: 'fat' },
+      { name: 'ชีส', emoji: '🧀', category: 'fat' },
+      { name: 'น้ำมันถั่วเหลือง', emoji: '🧈', category: 'fat' },
+      { name: 'น้ำมันปาล์ม', emoji: '🧈', category: 'fat' },
+      { name: 'น้ำมันรำข้าว', emoji: '🧈', category: 'fat' },
+      { name: 'กะทิ', emoji: '🥥', category: 'fat' },
+      { name: 'น้ำมันมะพร้าว', emoji: '🥥', category: 'fat' },
+      
+      // Vitamin (Fruits)
+      { name: 'ส้ม', emoji: '🍊', category: 'vitamin' },
+      { name: 'มะละกอสุก', emoji: '🟠', category: 'vitamin' },
+      { name: 'กล้วย', emoji: '🍌', category: 'vitamin' },
+      { name: 'ฝรั่ง', emoji: '🍏', category: 'vitamin' },
+      { name: 'มะม่วงสุก', emoji: '🥭', category: 'vitamin' },
+      { name: 'สับปะรด', emoji: '🍍', category: 'vitamin' },
+      { name: 'แตงโม', emoji: '🍉', category: 'vitamin' },
+      { name: 'แอปเปิล', emoji: '🍎', category: 'vitamin' },
+      { name: 'กีวี', emoji: '🥝', category: 'vitamin' },
+      { name: 'องุ่น', emoji: '🍇', category: 'vitamin' },
+      
+      // Mineral (Vegetables)
+      { name: 'ผักบุ้ง', emoji: '🥬', category: 'mineral' },
+      { name: 'ตำลึง', emoji: '🌿', category: 'mineral' },
+      { name: 'คะน้า', emoji: '🥬', category: 'mineral' },
+      { name: 'บรอกโคลี', emoji: '🥦', category: 'mineral' },
+      { name: 'แครอท', emoji: '🥕', category: 'mineral' },
+      { name: 'ฟักทอง', emoji: '🎃', category: 'mineral' },
+      { name: 'มะเขือเทศ', emoji: '🍅', category: 'mineral' },
+      
+      // Water
+      { name: 'น้ำเปล่า', emoji: '💧', category: 'water' }
+    ];
+
+    // --- Game State ---
+    let stageData = [];
+    let currentStage = 1;
+    let totalScore = 0;
+    let stageScore = 0;
+    let matchedCount = 0;
+    let timeRemaining = 30;
+    let timerInterval = null;
+    let gameActive = false;
+    let shuffledFoods = [];
+    let stageScores = [];
+    let stageTimes = [];
+    
+    // Player Info
+    let playerName = '';
+    let playerClass = '';
+    let playerNumber = '';
+
+    // Drag State
+    let draggedItemElement = null;
+    let clonedDragItem = null;
+
+    // --- Core Logic ---
+    function generateStages() {
+      const stages = [[], [], [], [], []];
+      // สร้างคลังอาหารแบบสุ่ม 1 กองใหญ่ (50 รายการ) ไว้ใช้ร่วมกันทั้ง 5 ด่าน
+      let available = [...allFoods].sort(() => Math.random() - 0.5);
+      
+      for (let stage = 0; stage < 5; stage++) {
+        const stageItems = [];
+        
+        // พยายามดึงอาหารให้ครบทุกหมู่ก่อนในแต่ละด่าน (หมู่ละ 1 อย่างเป็นอย่างน้อย)
+        const categories = ['protein', 'carbohydrate', 'fat', 'vitamin', 'mineral', 'water'];
+        categories.forEach(cat => {
+            const itemIndex = available.findIndex(f => f.category === cat);
+            if(itemIndex > -1) {
+                stageItems.push({ id: `stg${stage}_${stageItems.length}`, ...available[itemIndex] });
+                available.splice(itemIndex, 1); // ดึงออกแล้วลบออกจากกองใหญ่
+            }
+        });
+
+        // สุ่มดึงอาหารที่เหลือให้ครบ 10 อย่างต่อด่าน
+        while(stageItems.length < 10 && available.length > 0) {
+            const rIdx = Math.floor(Math.random() * available.length);
+            stageItems.push({ id: `stg${stage}_${stageItems.length}`, ...available[rIdx] });
+            available.splice(rIdx, 1); // ดึงออกแล้วลบออกจากกองใหญ่
+        }
+        
+        // สลับตำแหน่งอาหารทั้ง 10 อย่างในด่านนั้นๆ
+        stages[stage] = stageItems.sort(() => Math.random() - 0.5);
+      }
+      return stages;
+    }
+
+    function startGame(e) {
+      e.preventDefault();
+      initAudio();
+      
+      playerName = document.getElementById('player-name').value;
+      playerClass = document.getElementById('player-class').value;
+      playerNumber = document.getElementById('player-number').value;
+      
+      stageData = generateStages();
+      currentStage = 1;
+      totalScore = 0;
+      stageScores = [];
+      stageTimes = [];
+      
+      document.getElementById('welcome-modal').classList.add('hidden');
+      initStage(1);
+    }
+
+    function initStage(stageNum) {
+      currentStage = stageNum;
+      stageScore = 0;
+      matchedCount = 0;
+      timeRemaining = 30;
+      gameActive = true;
+      
+      // Update UI
+      document.getElementById('current-stage').textContent = currentStage;
+      document.getElementById('score').textContent = totalScore;
+      document.getElementById('timer').textContent = timeRemaining;
+      document.getElementById('timer').classList.remove('text-red-500');
+      updateProgress();
+      
+      // Clear Drop Zones
+      document.querySelectorAll('.matched-items').forEach(container => {
+        container.innerHTML = '';
+      });
+      
+      // Render Foods
+      shuffledFoods = [...stageData[currentStage - 1]];
+      renderFoodItems();
+      
+      // Modals
+      document.getElementById('stage-complete-modal').classList.add('hidden');
+      document.getElementById('timeout-modal').classList.add('hidden');
+      document.getElementById('stage-container').classList.remove('hidden');
+      
+      startTimer();
+    }
+
+    function renderFoodItems() {
+      const container = document.getElementById('food-container');
+      container.innerHTML = '';
+      
+      shuffledFoods.forEach((food, index) => {
+        const item = document.createElement('div');
+        item.className = 'food-item bg-white rounded-xl px-3 py-2 sm:px-4 sm:py-3 shadow-md flex items-center gap-2 floating border-2 border-gray-100';
+        item.setAttribute('draggable', 'true');
+        item.setAttribute('data-id', food.id);
+        item.setAttribute('data-category', food.category);
+        item.style.animationDelay = `${index * 0.1}s`;
+        
+        item.innerHTML = `<span>${food.emoji}</span><span>${food.name}</span>`;
+        
+        // Desktop Drag Events
+        item.addEventListener('dragstart', handleDragStart);
+        item.addEventListener('dragend', handleDragEnd);
+        
+        // Mobile Touch Events (Custom Drag Implementation)
+        item.addEventListener('touchstart', handleTouchStart, {passive: false});
+        item.addEventListener('touchmove', handleTouchMove, {passive: false});
+        item.addEventListener('touchend', handleTouchEnd);
+        
+        container.appendChild(item);
+      });
+    }
+
+    // --- Drag and Drop Handlers (Desktop) ---
+    function handleDragStart(e) {
+      if (!gameActive) return;
+      draggedItemElement = this;
+      this.classList.add('dragging');
+      this.classList.remove('floating');
+      if(e.dataTransfer) {
+        e.dataTransfer.setData('text/plain', this.dataset.id); // ดึง ID มาเผื่อใช้
+        e.dataTransfer.effectAllowed = 'move';
+      }
+    }
+
+    function handleDragEnd(e) {
+      this.classList.remove('dragging');
+      // แก้ไขบัค: เช็คว่าตัวแม่ (parentElement) ยังมีอยู่ไหมก่อนอ้างอิง
+      if(this.parentElement && this.parentElement.id === 'food-container') {
+         this.classList.add('floating');
+      }
+      draggedItemElement = null;
+    }
+
+    // --- Touch Handlers (Mobile) ---
+    function handleTouchStart(e) {
+      if (!gameActive || e.touches.length > 1) return;
+      initAudio(); // Ensure audio context is ready on first interaction
+      
+      draggedItemElement = this;
+      this.classList.remove('floating');
+      this.style.opacity = '0.3';
+      
+      const touch = e.touches[0];
+      const rect = this.getBoundingClientRect();
+      
+      // Create a visual clone for dragging
+      clonedDragItem = this.cloneNode(true);
+      clonedDragItem.className = 'food-item bg-white rounded-xl px-3 py-2 sm:px-4 sm:py-3 shadow-md flex items-center gap-2 touch-clone border-2 border-gray-100';
+      clonedDragItem.style.width = rect.width + 'px';
+      
+      // Center clone to finger
+      updateClonePosition(touch.clientX, touch.clientY);
+      
+      document.body.appendChild(clonedDragItem);
+      
+      if(e.cancelable) e.preventDefault(); 
+    }
+
+    function handleTouchMove(e) {
+      if (!clonedDragItem || !gameActive) return;
+      if(e.cancelable) e.preventDefault(); // Stop scrolling
+      
+      const touch = e.touches[0];
+      updateClonePosition(touch.clientX, touch.clientY);
+      
+      // (touch-clone ถูกตั้งค่า pointer-events: none ไว้แล้ว จึงทะลุไปหาตัวด้านล่างได้เลย)
+      const elemBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+      
+      // Highlight drop zone
+      document.querySelectorAll('.drop-zone').forEach(z => z.classList.remove('drag-over'));
+      const dropZone = elemBelow ? elemBelow.closest('.drop-zone') : null;
+      if (dropZone) {
+        dropZone.classList.add('drag-over');
+      }
+    }
+
+    function handleTouchEnd(e) {
+      if (!clonedDragItem) return;
+      
+      const touch = e.changedTouches[0];
+      const elemBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+      const dropZone = elemBelow ? elemBelow.closest('.drop-zone') : null;
+      
+      clonedDragItem.remove();
+      clonedDragItem = null;
+      
+      document.querySelectorAll('.drop-zone').forEach(z => z.classList.remove('drag-over'));
+      
+      if (draggedItemElement) {
+        draggedItemElement.style.opacity = '1';
+        if (dropZone && gameActive) {
+          processDrop(dropZone, draggedItemElement);
+        } else {
+          draggedItemElement.classList.add('floating');
+        }
+      }
+      draggedItemElement = null;
+    }
+
+    function updateClonePosition(x, y) {
+      if(!clonedDragItem) return;
+      // Offset slightly up and left so user can see what they are dragging
+      clonedDragItem.style.left = (x - (clonedDragItem.offsetWidth / 2)) + 'px';
+      clonedDragItem.style.top = (y - (clonedDragItem.offsetHeight / 2) - 20) + 'px';
+    }
+
+    // --- Drop Zone Listeners (Desktop) ---
+    document.querySelectorAll('.drop-zone').forEach(zone => {
+      zone.addEventListener('dragenter', (e) => {
+        e.preventDefault();
+        if(gameActive) zone.classList.add('drag-over');
+      });
+      zone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        if(gameActive) zone.classList.add('drag-over');
+      });
+      zone.addEventListener('dragleave', (e) => {
+        // ป้องกันกล่องกระพริบตอนลากผ่านตัวหนังสือด้านในกล่อง
+        if (e.relatedTarget && e.currentTarget.contains(e.relatedTarget)) return;
+        zone.classList.remove('drag-over');
+      });
+      zone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        zone.classList.remove('drag-over');
+        
+        let item = draggedItemElement;
+        
+        // กรณีเชื่อมโยงตัวแปรหลุด ให้ใช้วิธีดึงจาก ID แทน (ปลอดภัยขึ้นมาก)
+        if (!item && e.dataTransfer) {
+            const foodId = e.dataTransfer.getData('text/plain');
+            item = document.querySelector(`[data-id="${foodId}"]`);
+        }
+        
+        if (item && gameActive) {
+          processDrop(zone, item);
+        }
+      });
+    });
+
+    // --- Match Logic ---
+    function processDrop(dropZone, item) {
+      const targetCategory = dropZone.dataset.category;
+      const itemCategory = item.dataset.category;
+      
+      if (targetCategory === itemCategory) {
+        // MATCH SUCCESS
+        playSuccessSound();
+        
+        // Clone for matched area to style differently
+        const matchedObj = item.cloneNode(true);
+        matchedObj.className = 'bg-white text-black rounded-md px-2 py-1 flex items-center gap-1 shadow-sm text-xs sm:text-sm font-bold matched mb-1';
+        matchedObj.removeAttribute('draggable');
+        matchedObj.querySelector('span:first-child').style.fontSize = '1.2rem'; // smaller emoji
+        matchedObj.style.opacity = '1';
+        matchedObj.style.animationDelay = '0s';
+        
+        dropZone.querySelector('.matched-items').appendChild(matchedObj);
+        item.remove(); // Remove from source
+        
+        stageScore += 10;
+        matchedCount++;
+        totalScore += 10;
+        
+        updateScore();
+        updateProgress();
+        createTinyConfetti(dropZone);
+        
+        if (matchedCount >= 10) {
+          handleStageComplete();
+        }
+      } else {
+        // MATCH FAIL
+        playErrorSound();
+        item.classList.add('wrong-match');
+        
+        stageScore = Math.max(0, stageScore - 5);
+        totalScore = Math.max(0, totalScore - 5);
+        timeRemaining = Math.max(0, timeRemaining - 1); // Penalty
+        
+        updateScore();
+        updateTimerDisplay();
+        
+        setTimeout(() => {
+          if(item) item.classList.remove('wrong-match');
+        }, 500);
+      }
+    }
+
+    // --- Timers and Score ---
+    function startTimer() {
+      if (timerInterval) clearInterval(timerInterval);
+      
+      timerInterval = setInterval(() => {
+        timeRemaining--;
+        updateTimerDisplay();
+        
+        if (timeRemaining <= 5) {
+          document.getElementById('timer').classList.add('text-red-500', 'animate-pulse');
+        }
+        
+        if (timeRemaining <= 0) {
+          handleTimeout();
+        }
+      }, 1000);
+    }
+
+    function updateTimerDisplay() {
+      document.getElementById('timer').textContent = timeRemaining;
+    }
+
+    function updateScore() {
+      document.getElementById('score').textContent = totalScore;
+      // Animate score pop
+      const scoreEl = document.getElementById('score');
+      scoreEl.style.transform = 'scale(1.5)';
+      setTimeout(() => scoreEl.style.transform = 'scale(1)', 200);
+    }
+
+    function updateProgress() {
+      const percent = (matchedCount / 10) * 100;
+      document.getElementById('progress-bar').style.width = `${percent}%`;
+      document.getElementById('matched-count').textContent = matchedCount;
+    }
+
+    // --- End Conditions ---
+    function handleStageComplete() {
+      clearInterval(timerInterval);
+      gameActive = false;
+      playWinStageSound();
+      
+      const timeBonus = timeRemaining * 5;
+      totalScore += timeBonus;
+      stageScore += timeBonus;
+      
+      stageScores.push(stageScore);
+      stageTimes.push(30 - timeRemaining);
+      
+      document.getElementById('completed-stage').textContent = currentStage;
+      document.getElementById('stage-score').textContent = stageScore;
+      document.getElementById('time-bonus-val').textContent = timeBonus;
+      document.getElementById('score').textContent = totalScore;
+      
+      createScreenConfetti();
+      
+      setTimeout(() => {
+        if (currentStage >= 5) {
+          showFinalSummary();
+        } else {
+          document.getElementById('stage-complete-modal').classList.remove('hidden');
+        }
+      }, 1000);
+    }
+
+    function handleTimeout() {
+      clearInterval(timerInterval);
+      gameActive = false;
+      playErrorSound();
+      
+      document.getElementById('timeout-score').textContent = stageScore;
+      document.getElementById('timeout-matched').textContent = matchedCount;
+      document.getElementById('timeout-modal').classList.remove('hidden');
+    }
+
+    function retryStage() {
+      // Re-init current stage without resetting total score to 0, just undo this stage's score
+      totalScore -= stageScore; 
+      initStage(currentStage);
+    }
+
+    function showFinalSummary() {
+      document.getElementById('stage-complete-modal').classList.add('hidden');
+      
+      const totalTimeUsed = stageTimes.reduce((a,b) => a+b, 0);
+      const avgTime = (totalTimeUsed / 5).toFixed(1);
+      
+      document.getElementById('final-player-name').textContent = `ยินดีด้วย ${playerName}! (${playerClass} เลขที่ ${playerNumber})`;
+      document.getElementById('total-final-score').textContent = totalScore;
+      document.getElementById('total-time').textContent = totalTimeUsed;
+      document.getElementById('avg-time').textContent = avgTime;
+      
+      const breakdownHtml = stageScores.map((score, idx) => `
+        <div class="flex justify-between items-center border-b border-gray-200 py-1">
+          <span>ด่าน ${idx + 1}</span>
+          <span class="font-bold text-amber-600">${score} คะแนน</span>
+        </div>
+      `).join('');
+      
+      document.getElementById('stage-breakdown').innerHTML = breakdownHtml;
+      document.getElementById('final-summary-modal').classList.remove('hidden');
+      
+      // Lots of confetti
+      for(let i=0; i<3; i++) {
+        setTimeout(createScreenConfetti, i * 800);
+      }
+    }
+
+    // --- Visual Effects ---
+    function createTinyConfetti(parent) {
+      for(let i=0; i<5; i++) {
+        const conf = document.createElement('div');
+        conf.className = 'confetti';
+        conf.style.left = (Math.random() * 100) + '%';
+        conf.style.top = '50%';
+        conf.style.width = '8px';
+        conf.style.height = '8px';
+        conf.style.backgroundColor = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'][Math.floor(Math.random()*5)];
+        conf.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+        parent.appendChild(conf);
+        setTimeout(() => conf.remove(), 1000);
+      }
+    }
+
+    function createScreenConfetti() {
+      const colors = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
+      for(let i=0; i<50; i++) {
+        const conf = document.createElement('div');
+        conf.className = 'confetti';
+        conf.style.left = (Math.random() * 100) + 'vw';
+        conf.style.top = (Math.random() * 50) + 50 + 'vh';
+        conf.style.width = (Math.random() * 10 + 5) + 'px';
+        conf.style.height = (Math.random() * 10 + 5) + 'px';
+        conf.style.backgroundColor = colors[Math.floor(Math.random()*colors.length)];
+        conf.style.position = 'fixed';
+        conf.style.zIndex = '9999';
+        
+        // Randomize animation specific to screen size
+        const angle = Math.random() * Math.PI * 2;
+        const velocity = 15 + Math.random() * 15;
+        const duration = 1 + Math.random();
+        
+        conf.style.transition = `transform ${duration}s cubic-bezier(.25,.8,.25,1), opacity ${duration}s ease`;
+        document.body.appendChild(conf);
+        
+        setTimeout(() => {
+          conf.style.transform = `translate(${Math.cos(angle)*velocity*10}px, -${Math.random()*300 + 200}px) rotate(${Math.random()*720}deg)`;
+          conf.style.opacity = '0';
+        }, 10);
+        
+        setTimeout(() => conf.remove(), duration * 1000 + 100);
+      }
+    }
+
+    // --- Event Listeners Bindings ---
+    document.getElementById('player-form').addEventListener('submit', startGame);
+    
+    document.getElementById('next-stage-btn').addEventListener('click', () => {
+      initStage(currentStage + 1);
+    });
+    
+    document.getElementById('timeout-retry-btn').addEventListener('click', retryStage);
+    
+    document.getElementById('reset-btn').addEventListener('click', () => {
+      if(confirm('คุณแน่ใจหรือไม่ที่จะเริ่มด่านนี้ใหม่? (คะแนนด่านนี้จะถูกรีเซ็ต)')) {
+        retryStage();
+      }
+    });
+
+    // Modals toggles
+    document.getElementById('open-info-btn').addEventListener('click', () => {
+      document.getElementById('info-modal').classList.remove('hidden');
+    });
+    
+    document.getElementById('close-info-btn').addEventListener('click', () => {
+      document.getElementById('info-modal').classList.add('hidden');
+    });
+    
+    document.getElementById('close-info-menu-btn').addEventListener('click', () => {
+      document.getElementById('info-modal').classList.add('hidden');
+    });
+
+    document.getElementById('final-close-btn').addEventListener('click', () => {
+      // Full game reset
+      document.getElementById('final-summary-modal').classList.add('hidden');
+      document.getElementById('stage-container').classList.add('hidden');
+      document.getElementById('welcome-modal').classList.remove('hidden');
+    });
+
+  </script>
+</body>
+</html>
