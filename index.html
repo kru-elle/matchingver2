@@ -1,1171 +1,1079 @@
 <!doctype html>
 <html lang="th" class="h-full">
-<head>
+ <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>เกมจับคู่สารอาหาร 5 ด่าน</title>
-  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>เกมพลิกการ์ดจับคู่ช่วงวัย</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
-    * { font-family: 'Kanit', sans-serif; }
-    
-    html, body { height: 100%; overscroll-behavior-y: contain; }
-    
-    h1 { font-size: clamp(2rem, 6vw, 3rem); font-weight: 900; letter-spacing: 0.05em; text-shadow: 2px 2px 0px rgba(0,0,0,0.1); color: #ffffff; }
-    h2 { font-size: clamp(1.5rem, 5vw, 2.5rem); font-weight: 800; color: #000000; }
-    h3 { font-size: clamp(1.2rem, 4vw, 2rem); font-weight: 700; color: #000000; }
-    p { font-size: clamp(1rem, 3vw, 1.2rem); line-height: 1.6; color: #000000; font-weight: 600; }
-    
-    body { color: #000000; }
-    button { font-size: clamp(1rem, 4vw, 1.2rem); font-weight: 600; }
-    label { font-size: clamp(1rem, 4vw, 1.2rem); font-weight: 600; }
-    input, select { font-size: clamp(1rem, 4vw, 1.2rem); }
-    
-    .food-item {
-      cursor: grab;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-      user-select: none;
-      touch-action: none; /* ป้องกันการเลื่อนหน้าจอเวลาลากบนมือถือ */
-      min-width: fit-content;
-      z-index: 10;
+    html, body {
+      box-sizing: border-box;
+      height: 100%;
+      font-family: 'Prompt', sans-serif;
     }
     
-    .food-item span:first-child { font-size: clamp(32px, 8vw, 48px); }
-    .food-item span:last-child { font-size: clamp(1rem, 4vw, 1.5rem); font-weight: 700; color: #4b5563; }
-    
-    .food-item:active { cursor: grabbing; }
-    
-    .food-item.dragging {
-      opacity: 0.5;
-      transform: scale(1.05) !important;
-      z-index: 1000;
+    * {
+      box-sizing: border-box;
     }
     
-    .touch-clone {
-      position: fixed !important;
-      z-index: 9999 !important;
-      pointer-events: none !important; /* จำเป็นมากสำหรับมือถือ เพื่อให้กดทะลุไปโดนกล่องเป้าหมาย */
-      transform: scale(1.1) rotate(5deg) !important;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-      opacity: 0.9;
-      margin: 0 !important;
+    .bg-main {
+      background-image: url('https://img2.pic.in.th/Gemini_Generated_Image_1ay1ik1ay1ik1ay1.png');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+    }
+
+    #game-page {
+      background: linear-gradient(135deg, #A084E8 0%, #8B6DD8 50%, #7656C8 100%);
+      background-attachment: fixed;
     }
     
-    .drop-zone { transition: all 0.3s ease; }
-    .drop-zone.drag-over {
-      transform: scale(1.02);
-      box-shadow: 0 0 20px rgba(255,255,255,0.8);
-      border-color: #ffffff;
+    @keyframes bounce-letter {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-10px) scale(1.1); }
     }
     
-    .matched { animation: matchSuccess 0.5s ease; }
-    @keyframes matchSuccess {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.2); }
-      100% { transform: scale(1); }
+    .title-letter {
+      display: inline-block;
+      animation: bounce-letter 1.5s ease-in-out infinite;
+      -webkit-text-stroke: 1px white;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
     }
     
-    .wrong-match { animation: wrongShake 0.5s ease; }
-    @keyframes wrongShake {
-      0%, 100% { transform: translateX(0); }
-      25% { transform: translateX(-10px); }
-      75% { transform: translateX(10px); }
+    @media (min-width: 640px) {
+      .title-letter {
+        -webkit-text-stroke: 2px white;
+        text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
+      }
+    }
+    
+    .flip-card {
+      background-color: transparent;
+      width: 100%;
+      aspect-ratio: 1/1;
+      perspective: 1000px;
+      cursor: pointer;
+    }
+    
+    .flip-card-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      text-align: center;
+      transition: transform 0.6s;
+      transform-style: preserve-3d;
+    }
+    
+    .flip-card.flipped .flip-card-inner {
+      transform: rotateY(180deg);
+    }
+    
+    .flip-card-front, .flip-card-back {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      border-radius: 0.75rem;
+      font-size: 0.875rem;
+      padding: 0.5rem;
+      flex-direction: column;
+    }
+    
+    @media (min-width: 640px) {
+      .flip-card-front, .flip-card-back {
+        font-size: 1rem;
+        border-radius: 1rem;
+        padding: 0.75rem;
+      }
+    }
+    
+    @media (min-width: 768px) {
+      .flip-card-front, .flip-card-back {
+        font-size: 1.125rem;
+        border-radius: 1rem;
+        padding: 1rem;
+      }
+    }
+    
+    .flip-card-front {
+      background-image: url('https://img1.pic.in.th/images/Gemini_Generated_Image_mp5binmp5binmp5b.png');
+      background-size: cover;
+      background-position: center;
+      color: white;
+      z-index: 2;
+    }
+    
+    .flip-card-front-emoji {
+      font-size: 0;
+      margin-bottom: 0;
+    }
+    
+    @media (min-width: 640px) {
+      .flip-card-front-emoji {
+        font-size: 0;
+      }
+    }
+    
+    @media (min-width: 768px) {
+      .flip-card-front-emoji {
+        font-size: 0;
+      }
+    }
+    
+    .flip-card-back {
+      background-color: #F36A9A;
+      color: white;
+      transform: rotateY(180deg);
+      text-align: center;
+      font-size: 0.85rem;
+      line-height: 1.4;
+      word-break: break-word;
+    }
+    
+    @media (min-width: 640px) {
+      .flip-card-back {
+        font-size: 1rem;
+        line-height: 1.5;
+      }
+    }
+    
+    @media (min-width: 768px) {
+      .flip-card-back {
+        font-size: 1.1rem;
+        line-height: 1.6;
+      }
+    }
+    
+    .flip-card:not(.disabled):hover .flip-card-front {
+      box-shadow: 0 8px 16px rgba(102, 126, 234, 0.5);
+    }
+    
+    .flip-card.matched .flip-card-front,
+    .flip-card.matched .flip-card-back {
+      border: 3px solid #10b981;
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.6) !important;
+    }
+    
+    .flip-card.disabled {
+      cursor: not-allowed;
+      opacity: 0.8;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      transition: all 0.3s ease;
+      border: none;
+      cursor: pointer;
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+    }
+    
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+    
+    .btn-danger {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      transition: all 0.3s ease;
+      border: none;
+      cursor: pointer;
+    }
+    
+    .btn-danger:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(245, 87, 108, 0.4);
+    }
+    
+    .btn-danger:active {
+      transform: translateY(0);
+    }
+    
+    .btn-success {
+      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+      transition: all 0.3s ease;
+      border: none;
+      cursor: pointer;
+    }
+    
+    .btn-success:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(56, 239, 125, 0.4);
+    }
+    
+    .btn-success:active {
+      transform: translateY(0);
+    }
+    
+    .progress-bar {
+      background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #f5576c 100%);
+      transition: width 1s linear;
+    }
+    
+    .glass-card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
     }
     
     @keyframes float {
       0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-8px); }
-    }
-    .floating { animation: float 3s ease-in-out infinite; }
-    
-    @keyframes confetti {
-      0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-      100% { transform: translateY(-100px) rotate(720deg); opacity: 0; }
-    }
-    .confetti {
-      position: absolute;
-      animation: confetti 1s ease-out forwards;
-      pointer-events: none;
-      z-index: 50;
+      50% { transform: translateY(-5px); }
     }
     
-    .category-card { backdrop-filter: blur(10px); }
-    .progress-bar { transition: width 0.5s ease; }
-    body { box-sizing: border-box; }
+    .float-animation {
+      animation: float 3s ease-in-out infinite;
+    }
+    
+    input, button {
+      font-family: 'Prompt', sans-serif;
+    }
   </style>
-</head>
-<body class="h-full overflow-auto p-2 sm:p-4" style="background: url('https://img2.pic.in.th/Gemini_Generated_Image_iyz9ykiyz9ykiyz9.png') center/cover no-repeat fixed;">
-  <div id="app-wrapper" class="w-full h-full relative">
-    
-    <!-- WELCOME MODAL - Start Screen -->
-    <div id="welcome-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
-      <div class="bg-gradient-to-b from-emerald-400 to-teal-400 rounded-3xl sm:rounded-4xl p-6 sm:p-10 max-w-xl w-full my-4 shadow-2xl">
-        <div class="text-center mb-6 sm:mb-8 leading-tight">
-          <h1 id="game-title-welcome" class="text-5xl sm:text-7xl font-black mb-1 drop-shadow-lg text-black">🍎 เกมจับคู่</h1>
-          <h1 class="text-4xl sm:text-6xl font-black mb-4 drop-shadow-lg text-white">สารอาหาร 🥗</h1>
-          <p class="text-xl sm:text-3xl text-yellow-200 font-bold drop-shadow">5 ด่าน ท้าทายความรู้สารอาหาร</p>
-        </div>
-        
-        <div class="bg-white/90 rounded-2xl p-4 sm:p-6 mb-6 space-y-4 shadow-inner">
-          <h2 class="text-3xl sm:text-4xl font-bold text-emerald-600 flex items-center gap-2 mb-2">📋 กติกาเกม</h2>
-          <ul class="space-y-3 text-base sm:text-xl text-gray-700">
-            <li class="flex gap-3 items-start"><span class="text-2xl sm:text-3xl flex-shrink-0">✅</span> <span><strong>ลากอาหาร</strong> ไปวางในหมวดหมู่ที่ถูกต้อง</span></li>
-            <li class="flex gap-3 items-start"><span class="text-2xl sm:text-3xl flex-shrink-0">⭐</span> <span><strong>ตอบถูก:</strong> +10 คะแนน (โบนัสเวลา x5 เมื่อจบด่าน)</span></li>
-            <li class="flex gap-3 items-start"><span class="text-2xl sm:text-3xl flex-shrink-0">❌</span> <span><strong>ตอบผิด:</strong> หัก 5 คะแนน, หักเวลา 1 วินาที</span></li>
-            <li class="flex gap-3 items-start"><span class="text-2xl sm:text-3xl flex-shrink-0">⏱️</span> <span><strong>เวลา:</strong> 30 วินาทีต่อด่าน</span></li>
-            <li class="flex gap-3 items-start"><span class="text-2xl sm:text-3xl flex-shrink-0">🎯</span> <span><strong>เป้าหมาย:</strong> จับคู่ 10 อาหารให้ครบทุกด่าน</span></li>
-          </ul>
-        </div>
-        
-        <datalist id="past-players-list"></datalist>
-        <form id="player-form" class="space-y-5 mb-6">
-          <div>
-            <label class="block text-white font-bold mb-2 text-xl sm:text-2xl">👤 ชื่อ - นามสกุล</label>
-            <input type="text" id="player-name" list="past-players-list" autocomplete="off" placeholder="กรอกชื่อของคุณ" class="w-full px-4 py-4 border-2 border-transparent rounded-lg focus:outline-none focus:border-white focus:ring-4 focus:ring-emerald-300 text-xl sm:text-2xl shadow-sm" required>
-          </div>
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-white font-bold mb-2 text-xl sm:text-2xl">📚 ชั้นเรียน</label> 
-              <select id="player-class" class="w-full px-4 py-4 border-2 border-transparent rounded-lg focus:outline-none focus:border-white focus:ring-4 focus:ring-emerald-300 text-xl sm:text-2xl shadow-sm" required> 
-                <option value="">-- เลือกชั้น --</option> 
-                <option value="ป.1">ป.1</option> <option value="ป.2">ป.2</option> <option value="ป.3">ป.3</option> 
-                <option value="ป.4">ป.4</option> <option value="ป.5">ป.5</option> <option value="ป.6">ป.6</option> 
-              </select>
-            </div>
-            <div>
-              <label class="block text-white font-bold mb-2 text-xl sm:text-2xl">🔢 เลขที่</label> 
-              <input type="number" id="player-number" placeholder="เลขที่" class="w-full px-4 py-4 border-2 border-transparent rounded-lg focus:outline-none focus:border-white focus:ring-4 focus:ring-emerald-300 text-xl sm:text-2xl shadow-sm" min="1" max="50" required>
-            </div>
-          </div>
-          <button type="submit" class="w-full bg-gradient-to-r from-yellow-400 to-orange-400 text-white px-8 py-5 mt-6 rounded-xl font-bold text-2xl sm:text-3xl hover:shadow-xl transition-all transform hover:scale-105 flex items-center justify-center gap-3 border-b-4 border-orange-500 active:border-b-0 active:translate-y-1"> 
-            <span class="text-4xl">🎮</span> เริ่มเล่นเกม 
-          </button> 
-        </form>
-        <div class="flex flex-col sm:flex-row gap-3 mt-4 items-center justify-center">
-          <button id="open-info-btn" type="button" class="text-white/90 hover:text-white underline font-bold text-xl sm:text-2xl">ดูข้อมูลสารอาหารเพิ่มเติม 📚</button>
-          <button id="dashboard-btn" type="button" class="px-6 py-2 bg-white/20 hover:bg-white/30 border border-white/40 rounded-xl text-white font-bold text-lg transition-all">📊 ดู Ranking</button>
-        </div>
+  <script src="https://cdn.tailwindcss.com/3.4.17" type="text/javascript"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js" type="text/javascript"></script>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full bg-main overflow-hidden">
+  <div id="app" class="h-full overflow-auto">
+   <!-- หน้าแรก -->
+   <div id="home-page" class="min-h-full flex flex-col items-center justify-center p-3 py-6">
+    <div class="glass-card rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 max-w-2xl w-full text-center shadow-2xl">
+     <!-- ชื่อเกม -->
+     <h1 id="game-title" class="text-4xl sm:text-5xl md:text-6xl font-extrabold mb-6 sm:mb-8 leading-relaxed"></h1><!-- คำอธิบายสั้น ๆ -->
+     <p class="text-base sm:text-lg md:text-xl font-medium text-gray-800 mb-6 sm:mb-8 px-2">🎮 เล่นเกมจับคู่และเรียนรู้เกี่ยวกับการเจริญเติบโตในแต่ละช่วงวัย</p><!-- กรอกชื่อ -->
+     <datalist id="past-players-list"></datalist>
+     <div class="mb-4 sm:mb-6">
+      <label class="block text-base sm:text-lg md:text-xl font-bold text-purple-700 mb-3"><i class="fas fa-user mr-2"></i>ชื่อของคุณ</label>
+      <input type="text" id="player-name" list="past-players-list" autocomplete="off" class="w-full px-4 sm:px-5 py-3 sm:py-4 rounded-lg sm:rounded-xl border-2 border-purple-300 focus:border-purple-500 focus:outline-none text-center text-base sm:text-lg md:text-xl font-medium" placeholder="กรอกชื่อของคุณ">
+     </div>
+     <div class="grid grid-cols-2 gap-3 mb-6 sm:mb-8">
+      <div>
+       <label class="block text-sm sm:text-base font-bold text-purple-700 mb-2"><i class="fas fa-graduation-cap mr-1"></i>ชั้นเรียน</label>
+       <select id="player-class" class="w-full px-3 py-3 rounded-lg border-2 border-purple-300 focus:border-purple-500 focus:outline-none text-sm sm:text-base font-medium">
+        <option value="">-- เลือกชั้น --</option>
+        <option value="ป.1">ป.1</option><option value="ป.2">ป.2</option><option value="ป.3">ป.3</option>
+        <option value="ป.4">ป.4</option><option value="ป.5">ป.5</option><option value="ป.6">ป.6</option>
+       </select>
       </div>
+      <div>
+       <label class="block text-sm sm:text-base font-bold text-purple-700 mb-2"><i class="fas fa-hashtag mr-1"></i>เลขที่</label>
+       <input type="number" id="player-number" min="1" max="50" placeholder="เลขที่" class="w-full px-3 py-3 rounded-lg border-2 border-purple-300 focus:border-purple-500 focus:outline-none text-sm sm:text-base font-medium text-center">
+      </div>
+     </div>
+     <!-- ปุ่มเริ่มเกม -->
+     <button onclick="startGame()" class="btn-primary text-white font-bold py-4 sm:py-5 px-8 sm:px-10 rounded-lg sm:rounded-2xl text-xl sm:text-2xl md:text-3xl shadow-lg w-full mb-3 hover:shadow-2xl transition-all tracking-wide"><i class="fas fa-play mr-2"></i>เริ่มเล่นเกม</button>
+     <button onclick="showDashboard('home')" class="w-full py-3 bg-white border-2 border-purple-300 text-purple-700 font-bold rounded-xl text-base sm:text-lg hover:bg-purple-50 transition-all mb-6 sm:mb-8">📊 ดู Ranking</button><!-- คำอธิบายกติกาสั้น ๆ -->
+     <div class="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 text-left border-2 border-blue-200">
+      <h2 class="text-lg sm:text-xl md:text-2xl font-bold text-blue-800 mb-3 sm:mb-4"><i class="fas fa-lightbulb mr-2"></i>วิธีเล่น</h2>
+      <ul class="space-y-2 sm:space-y-3 text-sm sm:text-base md:text-lg text-gray-800 font-medium">
+       <li>✅ เปิดการ์ดแล้วจับคู่ช่วงวัยกับลักษณะการเจริญเติบโต</li>
+       <li>✅ หาคู่ที่ถูกต้องให้ได้ทั้งหมด</li>
+       <li>✅ มีทั้งหมด 5 ชุด ชุดละ 4 คู่</li>
+       <li>✅ แต่ละชุดมีเวลา 60 วินาที</li>
+       <li>✅ ตอบถูก ข้อละ 10 คะแนน + โบนัส 5 คะแนน/วินาที</li>
+      </ul>
+     </div>
     </div>
-
-    <!-- INFO MODAL - Game Information -->
-    <div id="info-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center z-[60] p-4 overflow-y-auto">
-      <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-2xl w-full my-4 shadow-2xl relative">
-        <button id="close-info-btn" class="absolute top-4 right-4 text-3xl text-gray-400 hover:text-gray-600 transition-colors w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100">✕</button>
-        <h2 class="text-2xl sm:text-3xl font-bold text-emerald-600 mb-6 flex items-center gap-2">📚 ข้อมูลสารอาหาร 5 หมู่</h2>
-        
-        <div class="space-y-4 max-h-[60vh] overflow-y-auto pr-2 pb-4">
-          <div class="bg-red-50 rounded-xl p-4 border-2 border-red-200">
-            <h3 class="text-lg sm:text-xl font-bold text-red-600 mb-1 flex items-center gap-2"><span>🥩</span> โปรตีน (Protein)</h3>
-            <p class="text-sm sm:text-base text-gray-700"><strong>ประโยชน์:</strong> ช่วยเสริมสร้างการเจริญเติบโตและซ่อมแซมเนื้อเยื่อ</p>
-            <p class="text-xs sm:text-sm text-gray-600 mt-1"><strong>ตัวอย่าง:</strong> เนื้อสัตว์ ไข่ นม ถั่ว</p>
-          </div>
-          <div class="bg-amber-50 rounded-xl p-4 border-2 border-amber-200">
-            <h3 class="text-lg sm:text-xl font-bold text-amber-600 mb-1 flex items-center gap-2"><span>🍚</span> คาร์โบไฮเดรต (Carbohydrate)</h3>
-            <p class="text-sm sm:text-base text-gray-700"><strong>ประโยชน์:</strong> เป็นแหล่งพลังงานหลักให้ร่างกาย</p>
-            <p class="text-xs sm:text-sm text-gray-600 mt-1"><strong>ตัวอย่าง:</strong> ข้าว ขนมปัง เส้นก๋วยเตี๋ยว มันเทศ</p>
-          </div>
-          <div class="bg-orange-50 rounded-xl p-4 border-2 border-orange-200">
-            <h3 class="text-lg sm:text-xl font-bold text-orange-600 mb-1 flex items-center gap-2"><span>🥑</span> ไขมัน (Fat)</h3>
-            <p class="text-sm sm:text-base text-gray-700"><strong>ประโยชน์:</strong> ให้พลังงานสูง และช่วยดูดซึมวิตามิน</p>
-            <p class="text-xs sm:text-sm text-gray-600 mt-1"><strong>ตัวอย่าง:</strong> น้ำมัน เนยแท้ ชีส กะทิ</p>
-          </div>
-          <div class="bg-green-50 rounded-xl p-4 border-2 border-green-200">
-            <h3 class="text-lg sm:text-xl font-bold text-green-600 mb-1 flex items-center gap-2"><span>🍊</span> วิตามิน (Vitamin)</h3>
-            <p class="text-sm sm:text-base text-gray-700"><strong>ประโยชน์:</strong> ควบคุมการทำงานของอวัยวะและสร้างภูมิคุ้มกัน</p>
-            <p class="text-xs sm:text-sm text-gray-600 mt-1"><strong>ตัวอย่าง:</strong> ผลไม้ต่างๆ เช่น ส้ม มะม่วง กล้วย สับปะรด</p>
-          </div>
-          <div class="bg-blue-50 rounded-xl p-4 border-2 border-blue-200">
-            <h3 class="text-lg sm:text-xl font-bold text-blue-600 mb-1 flex items-center gap-2"><span>🦴</span> เกลือแร่ (Minerals)</h3>
-            <p class="text-sm sm:text-base text-gray-700"><strong>ประโยชน์:</strong> เสริมสร้างความแข็งแรงของกระดูกและฟัน</p>
-            <p class="text-xs sm:text-sm text-gray-600 mt-1"><strong>ตัวอย่าง:</strong> ผักบุ้ง บรอกโคลี แครอท มะเขือเทศ</p>
-          </div>
-          <div class="bg-cyan-50 rounded-xl p-4 border-2 border-cyan-200">
-            <h3 class="text-lg sm:text-xl font-bold text-cyan-600 mb-1 flex items-center gap-2"><span>💧</span> น้ำ (Water)</h3>
-            <p class="text-sm sm:text-base text-gray-700"><strong>ประโยชน์:</strong> เป็นส่วนประกอบสำคัญของเซลล์และควบคุมอุณหภูมิ</p>
-            <p class="text-xs sm:text-sm text-gray-600 mt-1"><strong>ตัวอย่าง:</strong> น้ำเปล่า</p>
-          </div>
-        </div>
-        <div class="mt-6">
-          <button id="close-info-menu-btn" class="w-full bg-gray-800 hover:bg-gray-900 text-white px-6 py-3 rounded-xl font-bold transition-all text-lg"> เข้าใจแล้ว ปิดหน้าต่างนี้ </button>
-        </div>
+   </div><!-- หน้าเกม -->
+   <div id="game-page" class="min-h-full flex flex-col p-2 sm:p-3 md:p-4 pb-2 gap-2 sm:gap-3 md:gap-4 hidden">
+    <!-- Header -->
+    <div class="glass-card rounded-lg sm:rounded-xl md:rounded-2xl p-2 sm:p-3 md:p-4 flex-shrink-0">
+     <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs sm:text-sm md:text-base mb-2 sm:mb-3">
+      <div class="bg-purple-50 rounded px-2 sm:px-3 py-1.5 sm:py-2">
+       <span class="font-bold text-purple-700"> <i class="fas fa-user mr-1"></i><span id="display-name" class="hidden sm:inline">ผู้เล่น</span> </span>
       </div>
+      <div class="bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded px-2 sm:px-3 py-1.5 sm:py-2 font-bold text-center">
+       <i class="fas fa-layer-group mr-0.5 sm:mr-1"></i>ชุดที่ <span id="current-set">1</span>/5
+      </div>
+      <div class="bg-green-50 rounded px-2 sm:px-3 py-1.5 sm:py-2">
+       <span class="font-bold text-green-600"> <i class="fas fa-star mr-0.5 sm:mr-1"></i><span id="score">0</span> </span>
+      </div>
+      <div class="bg-red-50 rounded px-2 sm:px-3 py-1.5 sm:py-2">
+       <span class="font-bold text-red-500"> <i class="fas fa-clock mr-0.5 sm:mr-1"></i><span id="timer">60</span>ว </span>
+      </div>
+     </div><!-- Progress Bar -->
+     <div class="bg-gray-200 rounded-full h-2 sm:h-3 md:h-4 overflow-hidden">
+      <div id="progress-bar" class="progress-bar h-full rounded-full" style="width: 100%"></div>
+     </div>
+    </div><!-- คำชี้แจง -->
+    <div class="bg-yellow-100 border-l-4 border-yellow-500 p-2 sm:p-3 rounded-r-lg text-xs sm:text-sm md:text-base flex-shrink-0">
+     <p class="text-yellow-800 font-semibold"><i class="fas fa-info-circle mr-1 sm:mr-2"></i> <span id="instruction-display">เปิดการ์ดแล้วจับคู่ช่วงวัยกับลักษณะการเจริญเติบโต</span></p>
+    </div><!-- พื้นที่เกม -->
+    <div class="flex-1 relative min-h-0 overflow-auto">
+     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4 p-2 sm:p-3 md:p-4 h-fit w-full" id="game-grid"></div>
+    </div><!-- ปุ่มควบคุม -->
+    <div class="glass-card rounded-lg sm:rounded-xl md:rounded-2xl p-2 sm:p-3 md:p-4 flex-shrink-0">
+     <div class="flex flex-wrap justify-center gap-1.5 sm:gap-2 md:gap-4">
+      <button onclick="resetCards()" class="btn-danger text-white font-bold py-2 px-2.5 sm:py-3 sm:px-4 md:py-3 md:px-6 rounded md:rounded-xl text-xs sm:text-sm md:text-base flex-1 sm:flex-none"> <i class="fas fa-eraser mr-1 hidden sm:inline"></i>รีเซ็ต </button> <button onclick="goHome()" class="btn-primary text-white font-bold py-2 px-2.5 sm:py-3 sm:px-4 md:py-3 md:px-6 rounded md:rounded-xl text-xs sm:text-sm md:text-base flex-1 sm:flex-none"> <i class="fas fa-home mr-1 hidden sm:inline"></i>หน้าแรก </button>
+     </div>
     </div>
-
-    <!-- MAIN STAGE CONTAINER -->
-    <div id="stage-container" class="hidden min-h-full flex flex-col pb-10">
-      <header class="text-center mb-3 sm:mb-6 pt-2">
-        <h1 id="game-title" class="font-bold text-white drop-shadow-lg mb-2 leading-tight">
-          <span class="block text-4xl sm:text-5xl mb-1">🍎 เกมจับคู่</span>
-          <span class="block text-3xl sm:text-4xl text-yellow-200">สารอาหาร 🥗</span>
-        </h1>
-        <div class="bg-white/80 backdrop-blur-md rounded-xl sm:rounded-2xl p-2 sm:p-4 inline-block shadow-lg border-2 border-white/50">
-          <p class="text-emerald-700 text-lg sm:text-2xl font-black">ด่าน <span id="current-stage" class="text-2xl sm:text-3xl">1</span> <span class="text-gray-500">/ 5</span></p>
-          <p id="instruction-text" class="text-gray-800 text-sm sm:text-lg font-medium">ลากอาหารด้านล่างไปวางในหมวดหมู่ที่ถูกต้องให้ครบ 10 อย่าง</p>
-        </div>
-      </header>
-      
-      <!-- Stats Area -->
-      <div class="max-w-4xl mx-auto mb-3 sm:mb-4 w-full">
-        <div class="bg-white/90 backdrop-blur-sm rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-xl border-b-4 border-gray-200">
-          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4 mb-3">
-            <div class="flex items-center gap-3 bg-yellow-50 p-2 rounded-lg border border-yellow-200">
-              <span class="text-3xl sm:text-4xl">⭐</span>
-              <div><span class="text-gray-600 text-xs sm:text-sm font-bold block">คะแนนรวม</span><span class="text-yellow-600 font-black text-xl sm:text-2xl" id="score">0</span></div>
-            </div>
-            <div class="flex items-center gap-3 bg-blue-50 p-2 rounded-lg border border-blue-200">
-              <span class="text-3xl sm:text-4xl">⏱️</span>
-              <div><span class="text-gray-600 text-xs sm:text-sm font-bold block">เวลาเหลือ</span><span class="text-blue-600 font-black text-xl sm:text-2xl" id="timer">30</span><span class="text-sm font-bold text-blue-600 ml-1">วิ</span></div>
-            </div>
-            <button id="reset-btn" class="col-span-2 sm:col-span-1 bg-red-100 hover:bg-red-200 text-red-700 px-3 py-2 rounded-lg font-bold transition-all flex items-center justify-center gap-2 border border-red-200"> 
-              <i data-lucide="refresh-cw" class="w-5 h-5"></i> เริ่มด่านนี้ใหม่ 
-            </button>
-          </div>
-          <div class="bg-gray-200 rounded-full h-4 sm:h-6 overflow-hidden relative">
-            <div id="progress-bar" class="progress-bar bg-gradient-to-r from-emerald-400 to-teal-500 h-full rounded-full w-0"></div>
-            <div class="absolute inset-0 flex items-center justify-center text-xs font-bold text-gray-800 mix-blend-overlay drop-shadow-md"><span id="matched-count">0</span> / 10</div>
-          </div>
-        </div>
+   </div><!-- หน้าสรุป -->
+   <div id="summary-page" class="min-h-full flex flex-col items-center justify-center p-2 sm:p-3 md:p-4 py-4 sm:py-6 hidden overflow-auto">
+    <div class="glass-card rounded-2xl sm:rounded-3xl p-3 sm:p-4 md:p-6 max-w-3xl w-full shadow-2xl">
+     <div class="text-center mb-3 sm:mb-4 md:mb-6">
+      <div class="text-2xl sm:text-3xl md:text-5xl mb-2">
+       🎉
       </div>
-      
-      <!-- Drop Zones -->
-      <div class="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-4 mb-4 w-full flex-grow">
-        <div class="drop-zone category-card bg-red-500/90 rounded-xl p-2 sm:p-4 border-4 border-red-300 shadow-lg flex flex-col" data-category="protein">
-          <div class="text-center mb-2 pointer-events-none"><span class="text-4xl sm:text-6xl block mb-1">🥩</span><h3 class="text-white font-black text-lg sm:text-2xl drop-shadow-md">โปรตีน</h3></div>
-          <div class="matched-items flex-grow bg-black/10 rounded-lg p-1 sm:p-2 flex flex-wrap gap-1 content-start min-h-[60px]"></div>
-        </div>
-        <div class="drop-zone category-card bg-amber-500/90 rounded-xl p-2 sm:p-4 border-4 border-amber-300 shadow-lg flex flex-col" data-category="carbohydrate">
-          <div class="text-center mb-2 pointer-events-none"><span class="text-4xl sm:text-6xl block mb-1">🍚</span><h3 class="text-white font-black text-lg sm:text-2xl drop-shadow-md">คาร์โบไฮเดรต</h3></div>
-          <div class="matched-items flex-grow bg-black/10 rounded-lg p-1 sm:p-2 flex flex-wrap gap-1 content-start min-h-[60px]"></div>
-        </div>
-        <div class="drop-zone category-card bg-orange-500/90 rounded-xl p-2 sm:p-4 border-4 border-orange-300 shadow-lg flex flex-col" data-category="fat">
-          <div class="text-center mb-2 pointer-events-none"><span class="text-4xl sm:text-6xl block mb-1">🥑</span><h3 class="text-white font-black text-lg sm:text-2xl drop-shadow-md">ไขมัน</h3></div>
-          <div class="matched-items flex-grow bg-black/10 rounded-lg p-1 sm:p-2 flex flex-wrap gap-1 content-start min-h-[60px]"></div>
-        </div>
-        <div class="drop-zone category-card bg-green-500/90 rounded-xl p-2 sm:p-4 border-4 border-green-300 shadow-lg flex flex-col" data-category="vitamin">
-          <div class="text-center mb-2 pointer-events-none"><span class="text-4xl sm:text-6xl block mb-1">🍊</span><h3 class="text-white font-black text-lg sm:text-2xl drop-shadow-md">วิตามิน</h3></div>
-          <div class="matched-items flex-grow bg-black/10 rounded-lg p-1 sm:p-2 flex flex-wrap gap-1 content-start min-h-[60px]"></div>
-        </div>
-        <div class="drop-zone category-card bg-blue-500/90 rounded-xl p-2 sm:p-4 border-4 border-blue-300 shadow-lg flex flex-col" data-category="mineral">
-          <div class="text-center mb-2 pointer-events-none"><span class="text-4xl sm:text-6xl block mb-1">🦴</span><h3 class="text-white font-black text-lg sm:text-2xl drop-shadow-md">เกลือแร่</h3></div>
-          <div class="matched-items flex-grow bg-black/10 rounded-lg p-1 sm:p-2 flex flex-wrap gap-1 content-start min-h-[60px]"></div>
-        </div>
-        <div class="drop-zone category-card bg-cyan-500/90 rounded-xl p-2 sm:p-4 border-4 border-cyan-300 shadow-lg flex flex-col" data-category="water">
-          <div class="text-center mb-2 pointer-events-none"><span class="text-4xl sm:text-6xl block mb-1">💧</span><h3 class="text-white font-black text-lg sm:text-2xl drop-shadow-md">น้ำ</h3></div>
-          <div class="matched-items flex-grow bg-black/10 rounded-lg p-1 sm:p-2 flex flex-wrap gap-1 content-start min-h-[60px]"></div>
-        </div>
+      <h2 class="text-lg sm:text-xl md:text-2xl font-extrabold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">สรุปผลการเล่น</h2>
+     </div>
+     <div class="grid grid-cols-2 gap-1.5 sm:gap-2 md:gap-3 mb-2 sm:mb-3 md:mb-4">
+      <div class="bg-gradient-to-r from-purple-100 to-purple-200 rounded-lg sm:rounded-xl md:rounded-2xl p-2 sm:p-3 md:p-3 text-center">
+       <i class="fas fa-user text-lg sm:text-xl md:text-2xl text-purple-600 mb-0.5 sm:mb-1"></i>
+       <p class="text-gray-600 text-xs sm:text-sm">ชื่อผู้เล่น</p>
+       <p id="summary-name" class="text-xs sm:text-base md:text-lg font-bold text-purple-700 break-words">-</p>
       </div>
-      
-      <!-- Draggable Food Items Container -->
-      <div class="max-w-6xl mx-auto w-full mt-auto">
-        <div class="bg-white/90 backdrop-blur-md rounded-t-2xl sm:rounded-2xl p-4 shadow-[0_-10px_20px_rgba(0,0,0,0.1)] border-t-4 border-gray-200 min-h-[150px]">
-          <h3 class="text-gray-800 font-bold text-center mb-3 flex items-center justify-center gap-2 text-lg">
-            <i data-lucide="hand" class="w-6 h-6 text-emerald-600"></i> ลากรายการอาหารด้านล่างนี้
-          </h3>
-          <div id="food-container" class="flex flex-wrap gap-2 sm:gap-3 justify-center">
-            <!-- Food items will be generated here -->
-          </div>
-        </div>
+      <div class="bg-gradient-to-r from-yellow-100 to-yellow-200 rounded-lg sm:rounded-xl md:rounded-2xl p-2 sm:p-3 md:p-3 text-center">
+       <i class="fas fa-star text-lg sm:text-xl md:text-2xl text-yellow-600 mb-0.5 sm:mb-1"></i>
+       <p class="text-gray-600 text-xs sm:text-sm">คะแนน</p>
+       <p id="summary-score" class="text-xs sm:text-base md:text-lg font-bold text-yellow-700">0</p>
       </div>
+     </div><!-- สรุปความรู้ -->
+     <div class="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg sm:rounded-xl md:rounded-2xl p-3 sm:p-4 md:p-6 mb-3 sm:mb-4 md:mb-6 max-h-96 overflow-y-auto border-2 border-blue-200">
+      <h3 class="text-sm sm:text-base md:text-lg font-bold text-blue-800 mb-2 sm:mb-3"><i class="fas fa-book mr-2"></i>สรุปความรู้ - ลักษณะการเจริญเติบโตของแต่ละวัย</h3>
+      <div class="space-y-3 sm:space-y-4">
+       <!-- วัยทารก -->
+       <div class="bg-white rounded-lg p-3 sm:p-4 border-l-4 border-red-400">
+        <h4 class="font-bold text-red-700 text-sm sm:text-base md:text-lg mb-2">👶 วัยทารก (อายุ 0–1 ปี)</h4>
+        <ul class="text-sm sm:text-base md:text-lg text-gray-700 space-y-1 ml-4">
+         <li>• ฟันน้ำนมเริ่มขึ้นเมื่ออายุประมาณ 5-6 เดือน</li>
+         <li>• ผิวหนังอ่อนนุ่ม ส่วนใหญ่มีสีชมพู</li>
+         <li>• มีกล้ามเนื้อน้อย แขนและขางออยู่เกือบตลอดเวลา</li>
+        </ul>
+       </div><!-- วัยก่อนเรียน -->
+       <div class="bg-white rounded-lg p-3 sm:p-4 border-l-4 border-orange-400">
+        <h4 class="font-bold text-orange-700 text-sm sm:text-base md:text-lg mb-2">🧒 วัยก่อนเรียน (อายุ 1–6 ปี)</h4>
+        <ul class="text-sm sm:text-base md:text-lg text-gray-700 space-y-1 ml-4">
+         <li>• รูปร่างค่อย ๆ ยืดตัวออก ใบหน้าและศีรษะเล็กลง</li>
+         <li>• ความสูงเพิ่มขึ้นประมาณปีละ 7.5 เซนติเมตร</li>
+         <li>• แขน ขา ลำตัว คอเรียวยาวขึ้น มือและเท้าใหญ่แข็งแรงขึ้น</li>
+        </ul>
+       </div><!-- วัยเรียน -->
+       <div class="bg-white rounded-lg p-3 sm:p-4 border-l-4 border-yellow-400">
+        <h4 class="font-bold text-yellow-700 text-sm sm:text-base md:text-lg mb-2">👦 วัยเรียน (อายุ 7–12 ปี)</h4>
+        <ul class="text-sm sm:text-base md:text-lg text-gray-700 space-y-1 ml-4">
+         <li>• ฟันน้ำนมเริ่มหลุด ฟันแท้งอกขึ้นแทนที่</li>
+         <li>• ส่วนสูงเพิ่มขึ้นประมาณ 4-5 เซนติเมตรต่อปี</li>
+         <li>• น้ำหนักตัวเพิ่มขึ้นประมาณ 2-3 กิโลกรัม</li>
+        </ul>
+       </div><!-- วัยรุ่นชาย -->
+       <div class="bg-white rounded-lg p-3 sm:p-4 border-l-4 border-blue-400">
+        <h4 class="font-bold text-blue-700 text-sm sm:text-base md:text-lg mb-2">🧑 วัยรุ่นชาย (อายุ 13–19 ปี)</h4>
+        <ul class="text-sm sm:text-base md:text-lg text-gray-700 space-y-1 ml-4">
+         <li>• เริ่มมีหนวดเครา เสียงห้าว</li>
+         <li>• ร่างกายขยายใหญ่ ไหล่กว้างขึ้น กล้ามเนื้อแข็งแรง</li>
+         <li>• อัณฑะเริ่มผลิตอสุจิ เจริญเติบโตมากกว่าเด็กผู้หญิง</li>
+        </ul>
+       </div><!-- วัยรุ่นหญิง -->
+       <div class="bg-white rounded-lg p-3 sm:p-4 border-l-4 border-pink-400">
+        <h4 class="font-bold text-pink-700 text-sm sm:text-base md:text-lg mb-2">👧 วัยรุ่นหญิง (อายุ 13–19 ปี)</h4>
+        <ul class="text-sm sm:text-base md:text-lg text-gray-700 space-y-1 ml-4">
+         <li>• ในช่วงแรกจะมีน้ำหนักและส่วนสูงมากกว่าเด็กผู้ชาย</li>
+         <li>• แขนและขายาวขึ้น หน้าอกขยายใหญ่ สะโพกผายออก</li>
+         <li>• เริ่มมีประจำเดือน มีการเปลี่ยนแปลงทางร่างกายและอารมณ์อย่างมาก</li>
+        </ul>
+       </div><!-- วัยผู้ใหญ่ -->
+       <div class="bg-white rounded-lg p-3 sm:p-4 border-l-4 border-green-400">
+        <h4 class="font-bold text-green-700 text-sm sm:text-base md:text-lg mb-2">👨 วัยผู้ใหญ่ (อายุ 40–59 ปี)</h4>
+        <ul class="text-sm sm:text-base md:text-lg text-gray-700 space-y-1 ml-4">
+         <li>• สายตาเริ่มยาว ผิวเริ่มเหี่ยวย่น ไม่เต่งตึง</li>
+         <li>• ร่างกายเริ่มเสื่อมถอย การเคลื่อนไหวช้าลง</li>
+         <li>• น้ำหนักตัวเพิ่มขึ้นจากการสะสมไขมัน หูเริ่มตึง ผมเริ่มหงอก</li>
+        </ul>
+       </div><!-- วัยสูงอายุ -->
+       <div class="bg-white rounded-lg p-3 sm:p-4 border-l-4 border-gray-400">
+        <h4 class="font-bold text-gray-700 text-sm sm:text-base md:text-lg mb-2">👴 วัยสูงอายุ (อายุ 60 ปีขึ้นไป)</h4>
+        <ul class="text-sm sm:text-base md:text-lg text-gray-700 space-y-1 ml-4">
+         <li>• ผมเปลี่ยนเป็นสีขาว หลุดร่วง</li>
+         <li>• ผิวหนังแตกแห้งเหี่ยวย่น ร่างกายหยุดการเจริญเติบโต</li>
+         <li>• สมองเริ่มเสื่อม กล้ามเนื้อลีบ กระดูกเปราะ</li>
+        </ul>
+       </div>
+      </div>
+     </div>
+     <div id="save-status" class="text-center text-sm font-bold my-2 min-h-[20px]"></div>
+     <div class="flex flex-wrap justify-center gap-1.5 sm:gap-2 md:gap-4">
+      <button onclick="playAgain()" class="btn-success text-white font-bold py-2 px-3 sm:py-3 sm:px-4 md:py-3 md:px-6 rounded sm:rounded-lg md:rounded-xl text-xs sm:text-sm md:text-base flex-1 sm:flex-none"><i class="fas fa-redo mr-1 hidden sm:inline"></i>เล่นอีก</button>
+      <button onclick="showDashboard('summary')" class="text-white font-bold py-2 px-3 sm:py-3 sm:px-4 md:py-3 md:px-6 rounded sm:rounded-lg md:rounded-xl text-xs sm:text-sm md:text-base flex-1 sm:flex-none" style="background:linear-gradient(135deg,#7c3aed,#a855f7)">📊 Ranking</button>
+      <button onclick="goHome()" class="btn-primary text-white font-bold py-2 px-3 sm:py-3 sm:px-4 md:py-3 md:px-6 rounded sm:rounded-lg md:rounded-xl text-xs sm:text-sm md:text-base flex-1 sm:flex-none"><i class="fas fa-home mr-1 hidden sm:inline"></i>หน้าแรก</button>
+     </div>
     </div>
+   </div>
 
-    <!-- STAGE COMPLETE MODAL -->
-    <div id="stage-complete-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full text-center transform scale-95 transition-transform duration-300 shadow-2xl relative overflow-hidden" id="stage-complete-content">
-        <div class="absolute -top-10 -right-10 w-32 h-32 bg-yellow-300 rounded-full opacity-50 blur-2xl"></div>
-        <div class="text-6xl sm:text-7xl mb-4 animate-bounce">🎉</div>
-        <h2 class="text-3xl sm:text-4xl font-black text-emerald-600 mb-2 drop-shadow-sm">ด่าน <span id="completed-stage">1</span> สำเร็จ!</h2>
-        <div class="bg-gray-50 rounded-xl p-4 mb-6 border border-gray-100">
-          <p class="text-gray-600 mb-1 font-semibold text-lg">คะแนนด่านนี้</p>
-          <p class="text-5xl font-black text-amber-500 drop-shadow-sm mb-2" id="stage-score">0</p>
-          <p class="text-sm text-emerald-600 font-bold" id="time-bonus-text">+ โบนัสเวลา <span id="time-bonus-val">0</span></p>
-        </div>
-        <button id="next-stage-btn" class="w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-6 py-4 rounded-xl font-bold text-xl hover:shadow-lg transition-all border-b-4 border-teal-700 active:border-b-0 active:translate-y-1"> ➡️ ไปด่านถัดไป </button>
+   <!-- Dashboard Screen -->
+   <div id="dashboard-page" class="min-h-full flex-col p-4 md:p-8 overflow-y-auto hidden" style="background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%)">
+    <div class="max-w-4xl mx-auto w-full text-white">
+     <div class="flex items-center justify-between mb-6">
+      <div>
+       <h2 class="text-3xl md:text-4xl font-black text-yellow-400">📊 Leaderboard</h2>
+       <p class="text-white/50 text-sm mt-1">อันดับคะแนนสูงสุด — เกมพลิกการ์ดจับคู่ช่วงวัย</p>
       </div>
-    </div>
-
-    <!-- TIMEOUT MODAL -->
-    <div id="timeout-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full text-center shadow-2xl">
-        <div class="text-6xl sm:text-7xl mb-4 animate-pulse">⏰</div>
-        <h2 class="text-3xl sm:text-4xl font-black text-red-600 mb-2">หมดเวลาแล้ว!</h2>
-        <div class="bg-red-50 rounded-xl p-4 mb-6 border border-red-100">
-          <p class="text-red-800 font-bold text-lg mb-2">จับคู่ได้ <span id="timeout-matched" class="text-2xl">0</span> / 10</p>
-          <p class="text-gray-600 font-semibold">คะแนนที่ได้: <span class="text-2xl font-black text-amber-500" id="timeout-score">0</span></p>
-        </div>
-        <button id="timeout-retry-btn" class="w-full bg-gradient-to-r from-red-500 to-orange-500 text-white px-6 py-4 rounded-xl font-bold text-xl hover:shadow-lg transition-all border-b-4 border-red-700 active:border-b-0 active:translate-y-1 flex items-center justify-center gap-2"> 
-          <i data-lucide="rotate-ccw"></i> ลองเล่นด่านนี้ใหม่ 
-        </button>
+      <button onclick="closeDashboard()" class="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl font-bold text-sm transition-all">← กลับ</button>
+     </div>
+     <div class="grid grid-cols-3 gap-3 mb-6">
+      <div class="bg-white/10 rounded-2xl p-4 text-center border border-white/10">
+       <p class="text-3xl font-black text-cyan-400" id="dash-total">0</p>
+       <p class="text-xs text-white/60 mt-1">ผู้เล่นทั้งหมด</p>
       </div>
-    </div>
-
-    <!-- FINAL SUMMARY MODAL -->
-    <div id="final-summary-modal" class="fixed inset-0 bg-black/70 backdrop-blur-md hidden items-center justify-center z-[100] p-2 sm:p-4 overflow-y-auto">
-      <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-3xl w-full my-4 shadow-2xl relative">
-        <div class="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-yellow-300/30 to-transparent rounded-t-3xl pointer-events-none"></div>
-        <div class="text-center mb-6 sm:mb-8 relative z-10">
-          <div class="text-6xl sm:text-8xl mb-2 sm:mb-4 animate-bounce">🏆</div>
-          <h2 class="text-3xl sm:text-5xl font-black text-emerald-600 mb-1 drop-shadow-sm">ยอดเยี่ยมมาก!</h2>
-          <p class="text-gray-700 font-bold text-lg sm:text-xl" id="final-player-name">คุณเล่นจบ 5 ด่านสำเร็จ</p>
-          <div class="mt-4 inline-block bg-yellow-50 px-8 py-4 rounded-2xl border-2 border-yellow-400 shadow-inner">
-            <p class="text-gray-600 font-bold mb-1">คะแนนรวมทั้งหมด</p>
-            <p class="text-5xl sm:text-6xl font-black text-amber-500 drop-shadow-md"><span id="total-final-score">0</span></p>
-          </div>
-        </div>
-        
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-          <div class="bg-blue-50 rounded-2xl p-4 border border-blue-200">
-            <h3 class="text-lg font-bold text-blue-800 mb-3 flex items-center gap-2"><i data-lucide="bar-chart-2"></i> สถิติรวม</h3>
-            <div class="space-y-2 text-gray-700 font-medium">
-              <p class="flex justify-between"><span>เวลาที่ใช้ทั้งหมด:</span> <span class="font-bold text-blue-600"><span id="total-time">0</span> วินาที</span></p>
-              <p class="flex justify-between"><span>เวลาเฉลี่ยต่อด่าน:</span> <span class="font-bold text-blue-600"><span id="avg-time">0</span> วินาที</span></p>
-            </div>
-          </div>
-          <div class="bg-purple-50 rounded-2xl p-4 border border-purple-200">
-            <h3 class="text-lg font-bold text-purple-800 mb-3 flex items-center gap-2"><i data-lucide="list-ordered"></i> สรุปรายด่าน</h3>
-            <div id="stage-breakdown" class="space-y-1 text-sm font-medium text-gray-700 h-[80px] overflow-y-auto pr-1 custom-scrollbar">
-              <!-- Stage breakdown JS inject -->
-            </div>
-          </div>
-        </div>
-        
-        <div id="save-status" class="text-center text-sm font-bold my-2 min-h-[20px]"></div>
-        <div class="flex flex-col sm:flex-row gap-3">
-          <button id="final-close-btn" class="flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-6 py-4 rounded-xl font-bold text-xl hover:shadow-xl transition-all border-b-4 border-teal-800 active:border-b-0 active:translate-y-1 flex justify-center items-center gap-2">
-            <i data-lucide="home"></i> กลับหน้าหลัก
-          </button>
-          <button id="final-dashboard-btn" class="flex-1 bg-gradient-to-r from-violet-500 to-purple-700 text-white px-6 py-4 rounded-xl font-bold text-xl hover:shadow-xl transition-all border-b-4 border-purple-900 active:border-b-0 active:translate-y-1 flex justify-center items-center gap-2">
-            📊 ดู Ranking
-          </button>
-        </div>
+      <div class="bg-white/10 rounded-2xl p-4 text-center border border-white/10">
+       <p class="text-3xl font-black text-green-400" id="dash-top">0</p>
+       <p class="text-xs text-white/60 mt-1">คะแนนสูงสุด</p>
       </div>
-    </div>
-
-    <!-- DASHBOARD SCREEN -->
-    <div id="dashboard-screen" class="fixed inset-0 z-[110] hidden flex-col p-4 md:p-8 overflow-y-auto" style="background: linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%)">
-      <div class="max-w-4xl mx-auto w-full text-white">
-        <!-- Header -->
-        <div class="flex items-center justify-between mb-6">
-          <div>
-            <h2 class="text-3xl md:text-4xl font-black text-yellow-400">📊 Leaderboard</h2>
-            <p class="text-white/50 text-sm mt-1">อันดับคะแนนสูงสุด — เกมจับคู่สารอาหาร</p>
-          </div>
-          <button id="dash-back-btn" class="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl font-bold text-sm transition-all flex items-center gap-2">
-            ← กลับ
-          </button>
-        </div>
-
-        <!-- Stats Summary -->
-        <div class="grid grid-cols-3 gap-3 mb-6">
-          <div class="bg-white/10 rounded-2xl p-4 text-center border border-white/10">
-            <p class="text-3xl font-black text-cyan-400" id="dash-total-games">0</p>
-            <p class="text-xs text-white/60 mt-1">ผู้เล่นทั้งหมด</p>
-          </div>
-          <div class="bg-white/10 rounded-2xl p-4 text-center border border-white/10">
-            <p class="text-3xl font-black text-green-400" id="dash-top-score">0</p>
-            <p class="text-xs text-white/60 mt-1">คะแนนสูงสุด</p>
-          </div>
-          <div class="bg-white/10 rounded-2xl p-4 text-center border border-white/10">
-            <p class="text-3xl font-black text-pink-400" id="dash-avg-score">0</p>
-            <p class="text-xs text-white/60 mt-1">คะแนนเฉลี่ย</p>
-          </div>
-        </div>
-
-        <!-- Refresh + status -->
-        <div class="flex items-center justify-between mb-3">
-          <span class="text-white/50 text-xs" id="dash-load-status">กำลังโหลด…</span>
-          <button id="dash-refresh-btn" class="px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-xs font-bold transition-all">🔄 รีเฟรช</button>
-        </div>
-
-        <!-- Ranking Table -->
-        <div class="bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 overflow-hidden">
-          <div class="overflow-x-auto">
-            <table class="w-full text-sm">
-              <thead>
-                <tr class="bg-white/10 text-white/70 text-xs uppercase tracking-wider">
-                  <th class="px-4 py-3 text-center w-12">อันดับ</th>
-                  <th class="px-4 py-3 text-left">ชื่อ</th>
-                  <th class="px-4 py-3 text-center">ชั้น</th>
-                  <th class="px-4 py-3 text-center">เลขที่</th>
-                  <th class="px-4 py-3 text-center">คะแนนรวม</th>
-                  <th class="px-4 py-3 text-center">ด่านที่ผ่าน</th>
-                  <th class="px-4 py-3 text-center">สถานะ</th>
-                  <th class="px-4 py-3 text-center">เวลารวม</th>
-                  <th class="px-4 py-3 text-center hidden md:table-cell">วันที่</th>
-                </tr>
-              </thead>
-              <tbody id="ranking-table-body">
-                <tr><td colspan="9" class="text-center py-12 text-white/30">ยังไม่มีข้อมูล</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div id="no-sheet-notice" class="hidden mt-6 bg-yellow-500/20 border border-yellow-400/30 rounded-2xl p-5 text-center">
-          <p class="text-yellow-300 font-bold mb-1">⚠️ ยังไม่ได้ตั้งค่า Google Sheet</p>
-          <p class="text-white/60 text-sm">กรุณาตั้งค่า SHEET_URL ในโค้ดก่อน</p>
-        </div>
+      <div class="bg-white/10 rounded-2xl p-4 text-center border border-white/10">
+       <p class="text-3xl font-black text-pink-400" id="dash-avg">0</p>
+       <p class="text-xs text-white/60 mt-1">คะแนนเฉลี่ย</p>
       </div>
+     </div>
+     <div class="flex items-center justify-between mb-3">
+      <span class="text-white/50 text-xs" id="dash-status">กำลังโหลด…</span>
+      <button onclick="loadRankings()" class="px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-xs font-bold transition-all">🔄 รีเฟรช</button>
+     </div>
+     <div class="bg-white/5 rounded-2xl border border-white/10 overflow-hidden">
+      <div class="overflow-x-auto">
+       <table class="w-full text-sm">
+        <thead>
+         <tr class="bg-white/10 text-white/70 text-xs uppercase tracking-wider">
+          <th class="px-4 py-3 text-center w-12">อันดับ</th>
+          <th class="px-4 py-3 text-left">ชื่อ</th>
+          <th class="px-4 py-3 text-center">ชั้น</th>
+          <th class="px-4 py-3 text-center">เลขที่</th>
+          <th class="px-4 py-3 text-center">คะแนนรวม</th>
+          <th class="px-4 py-3 text-center hidden lg:table-cell">ชุด 1</th>
+          <th class="px-4 py-3 text-center hidden lg:table-cell">ชุด 2</th>
+          <th class="px-4 py-3 text-center hidden lg:table-cell">ชุด 3</th>
+          <th class="px-4 py-3 text-center hidden lg:table-cell">ชุด 4</th>
+          <th class="px-4 py-3 text-center hidden lg:table-cell">ชุด 5</th>
+          <th class="px-4 py-3 text-center">ถูก</th>
+          <th class="px-4 py-3 text-center">ผิด</th>
+          <th class="px-4 py-3 text-center">เวลา</th>
+          <th class="px-4 py-3 text-center hidden md:table-cell">วันที่</th>
+         </tr>
+        </thead>
+        <tbody id="dash-tbody">
+         <tr><td colspan="14" class="text-center py-12 text-white/30">ยังไม่มีข้อมูล</td></tr>
+        </tbody>
+       </table>
+      </div>
+     </div>
     </div>
+   </div>
   </div>
-
   <script>
-    // Initialize Lucide Icons
-    lucide.createIcons();
+    // ข้อมูล 5 ชุด แต่ละชุดมี 4 คู่
+    // Age image mapping
+    const ageImageMap = {
+      "วัยทารก (อายุ 0–1 ปี)": "https://img1.pic.in.th/images/16d210d36ffed19ba.png",
+      "วัยก่อนเรียน (อายุ 1–6 ปี)": "https://img1.pic.in.th/images/203f155a975521ffb.png",
+      "วัยเรียน (อายุ 7–12 ปี)": "https://img1.pic.in.th/images/35ad3c77985ae4809.png",
+      "วัยรุ่นชาย (อายุ 13–19 ปี)": "https://img1.pic.in.th/images/478b31f00fa3382ab.png",
+      "วัยรุ่นหญิง (อายุ 13–19 ปี)": "https://img1.pic.in.th/images/53d29bfa04a7e14b2.png",
+      "วัยผู้ใหญ่ (อายุ 40–59 ปี)": "https://img2.pic.in.th/684bb00478731bf4f.png",
+      "วัยสูงอายุ (อายุ 60 ปีขึ้นไป)": "https://img1.pic.in.th/images/779fb966e2dd90e67.png"
+    };
 
-    // --- Audio System ---
-    let audioContext = null;
-    
-    function initAudio() {
-      if (!audioContext) {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      }
-      if (audioContext.state === 'suspended') {
-        audioContext.resume();
-      }
-    }
-
-    function playSound(frequency, duration, type = 'sine', volume = 0.3) {
-      if (!audioContext) return;
-      try {
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        oscillator.type = type;
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        oscillator.frequency.value = frequency;
-        gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
-        oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + duration);
-      } catch (e) { console.error("Audio error:", e); }
-    }
-    
-    function playSuccessSound() {
-      playSound(523.25, 0.1, 'sine', 0.2); // C5
-      setTimeout(() => playSound(659.25, 0.1, 'sine', 0.2), 100); // E5
-      setTimeout(() => playSound(783.99, 0.15, 'sine', 0.2), 200); // G5
-    }
-    
-    function playErrorSound() {
-      playSound(300, 0.2, 'sawtooth', 0.1);
-      setTimeout(() => playSound(250, 0.3, 'sawtooth', 0.1), 150);
-    }
-    
-    function playWinStageSound() {
-      playSound(440, 0.1, 'square', 0.1);
-      setTimeout(() => playSound(554.37, 0.1, 'square', 0.1), 100);
-      setTimeout(() => playSound(659.25, 0.1, 'square', 0.1), 200);
-      setTimeout(() => playSound(880, 0.4, 'square', 0.1), 300);
-    }
-
-    // --- Data ---
-    const allFoods = [
-      // Protein
-      { name: 'เนื้อหมู', emoji: '🐷', category: 'protein' },
-      { name: 'เนื้อไก่', emoji: '🍗', category: 'protein' },
-      { name: 'เนื้อวัว', emoji: '🥩', category: 'protein' },
-      { name: 'เนื้อปลา', emoji: '🐟', category: 'protein' },
-      { name: 'ไข่ไก่', emoji: '🥚', category: 'protein' },
-      { name: 'ไข่เป็ด', emoji: '🦆', category: 'protein' },
-      { name: 'ไข่นกกระทา', emoji: '🥚', category: 'protein' },
-      { name: 'นมวัว', emoji: '🥛', category: 'protein' },
-      { name: 'นมถั่วเหลือง', emoji: '🥛', category: 'protein' },
-      { name: 'ถั่วเหลือง', emoji: '🫘', category: 'protein' },
-      { name: 'ถั่วเขียว', emoji: '🫘', category: 'protein' },
-      { name: 'ถั่วลิสง', emoji: '🥜', category: 'protein' },
-      { name: 'เต้าหู้', emoji: '🍲', category: 'protein' },
-      
-      // Carbohydrate
-      { name: 'ข้าวเจ้า', emoji: '🍚', category: 'carbohydrate' },
-      { name: 'ข้าวเหนียว', emoji: '🍚', category: 'carbohydrate' },
-      { name: 'ข้าวกล้อง', emoji: '🍚', category: 'carbohydrate' },
-      { name: 'ขนมปัง', emoji: '🍞', category: 'carbohydrate' },
-      { name: 'เส้นก๋วยเตี๋ยว', emoji: '🍜', category: 'carbohydrate' },
-      { name: 'มักกะโรนี', emoji: '🍝', category: 'carbohydrate' },
-      { name: 'เผือก', emoji: '🥔', category: 'carbohydrate' },
-      { name: 'มันเทศ', emoji: '🍠', category: 'carbohydrate' },
-      { name: 'มันฝรั่ง', emoji: '🥔', category: 'carbohydrate' },
-      { name: 'น้ำตาล', emoji: '🍯', category: 'carbohydrate' },
-      { name: 'น้ำผึ้ง', emoji: '🍯', category: 'carbohydrate' },
-      
-      // Fat & Oil
-      { name: 'น้ำมันหมู', emoji: '🧈', category: 'fat' },
-      { name: 'เนยแท้', emoji: '🧈', category: 'fat' },
-      { name: 'ชีส', emoji: '🧀', category: 'fat' },
-      { name: 'น้ำมันถั่วเหลือง', emoji: '🧈', category: 'fat' },
-      { name: 'น้ำมันปาล์ม', emoji: '🧈', category: 'fat' },
-      { name: 'น้ำมันรำข้าว', emoji: '🧈', category: 'fat' },
-      { name: 'กะทิ', emoji: '🥥', category: 'fat' },
-      { name: 'น้ำมันมะพร้าว', emoji: '🥥', category: 'fat' },
-      
-      // Vitamin (Fruits)
-      { name: 'ส้ม', emoji: '🍊', category: 'vitamin' },
-      { name: 'มะละกอสุก', emoji: '🟠', category: 'vitamin' },
-      { name: 'กล้วย', emoji: '🍌', category: 'vitamin' },
-      { name: 'ฝรั่ง', emoji: '🍏', category: 'vitamin' },
-      { name: 'มะม่วงสุก', emoji: '🥭', category: 'vitamin' },
-      { name: 'สับปะรด', emoji: '🍍', category: 'vitamin' },
-      { name: 'แตงโม', emoji: '🍉', category: 'vitamin' },
-      { name: 'แอปเปิล', emoji: '🍎', category: 'vitamin' },
-      { name: 'กีวี', emoji: '🥝', category: 'vitamin' },
-      { name: 'องุ่น', emoji: '🍇', category: 'vitamin' },
-      
-      // Mineral (Vegetables)
-      { name: 'ผักบุ้ง', emoji: '🥬', category: 'mineral' },
-      { name: 'ตำลึง', emoji: '🌿', category: 'mineral' },
-      { name: 'คะน้า', emoji: '🥬', category: 'mineral' },
-      { name: 'บรอกโคลี', emoji: '🥦', category: 'mineral' },
-      { name: 'แครอท', emoji: '🥕', category: 'mineral' },
-      { name: 'ฟักทอง', emoji: '🎃', category: 'mineral' },
-      { name: 'มะเขือเทศ', emoji: '🍅', category: 'mineral' },
-      
-      // Water
-      { name: 'น้ำเปล่า', emoji: '💧', category: 'water' }
+    const questionSetsData = [
+      // ชุดที่ 1
+      [
+        { age: "วัยสูงอายุ (อายุ 60 ปีขึ้นไป)", emoji: "👴", characteristic: "ผมเริ่มเปลี่ยนเป็นสีขาวและหลุดร่วง" },
+        { age: "วัยก่อนเรียน (อายุ 1–6 ปี)", emoji: "🧒", characteristic: "รูปร่างจะค่อย ๆ ยืดตัวออก" },
+        { age: "วัยเรียน (อายุ 7–12 ปี)", emoji: "👦", characteristic: "ฟันน้ำนมเริ่มหลุด" },
+        { age: "วัยทารก (อายุ 0–1 ปี)", emoji: "👶", characteristic: "มีกล้ามเนื้อน้อย แขนและขางอ" }
+      ],
+      // ชุดที่ 2
+      [
+        { age: "วัยสูงอายุ (อายุ 60 ปีขึ้นไป)", emoji: "👴", characteristic: "ผิวหนังแตกแห้งและเหี่ยวย่น" },
+        { age: "วัยก่อนเรียน (อายุ 1–6 ปี)", emoji: "🧒", characteristic: "ใบหน้าและศีรษะเล็กลงเมื่อเทียบกับขนาดตัว" },
+        { age: "วัยทารก (อายุ 0–1 ปี)", emoji: "👶", characteristic: "ฟันน้ำนมเริ่มขึ้นเมื่ออายุประมาณ 5-6 เดือน" },
+        { age: "วัยผู้ใหญ่ (อายุ 40–59 ปี)", emoji: "👨", characteristic: "ผมเริ่มหงอก" }
+      ],
+      // ชุดที่ 3
+      [
+        { age: "วัยสูงอายุ (อายุ 60 ปีขึ้นไป)", emoji: "👴", characteristic: "สมองเริ่มเสื่อม" },
+        { age: "วัยก่อนเรียน (อายุ 1–6 ปี)", emoji: "🧒", characteristic: "แขน ขา ลำตัว และคอเรียวยาวขึ้น" },
+        { age: "วัยเรียน (อายุ 7–12 ปี)", emoji: "👦", characteristic: "ส่วนสูงเพิ่มขึ้นประมาณ 4-5 เซนติเมตรต่อปี" },
+        { age: "วัยผู้ใหญ่ (อายุ 40–59 ปี)", emoji: "👨", characteristic: "สายตาเริ่มยาว" }
+      ],
+      // ชุดที่ 4
+      [
+        { age: "วัยสูงอายุ (อายุ 60 ปีขึ้นไป)", emoji: "👴", characteristic: "กล้ามเนื้อลีบ กระดูกเปราะ" },
+        { age: "วัยทารก (อายุ 0–1 ปี)", emoji: "👶", characteristic: "ผิวหนังอ่อนนุ่ม ส่วนใหญ่มีสีชมพู" },
+        { age: "วัยรุ่นหญิง (อายุ 13–19 ปี)", emoji: "👧", characteristic: "หน้าอกขยายใหญ่ขึ้น สะโพกผายออก" },
+        { age: "วัยผู้ใหญ่ (อายุ 40–59 ปี)", emoji: "👨", characteristic: "ผิวเริ่มเหี่ยวย่น ไม่เต่งตึง" }
+      ],
+      // ชุดที่ 5
+      [
+        { age: "วัยก่อนเรียน (อายุ 1–6 ปี)", emoji: "🧒", characteristic: "มือและเท้าจะใหญ่และแข็งแรงขึ้น" },
+        { age: "วัยเรียน (อายุ 7–12 ปี)", emoji: "👦", characteristic: "น้ำหนักตัวเพิ่มขึ้นประมาณ 2-3 กิโลกรัม" },
+        { age: "วัยรุ่นชาย (อายุ 13–19 ปี)", emoji: "🧑", characteristic: "ร่างกายขยายใหญ่ ไหล่กว้างขึ้น" },
+        { age: "วัยผู้ใหญ่ (อายุ 40–59 ปี)", emoji: "👨", characteristic: "หูเริ่มตึง" }
+      ]
     ];
 
-    // --- Game State ---
-    let stageData = [];
-    let currentStage = 1;
-    let totalScore = 0;
-    let stageScore = 0;
-    let matchedCount = 0;
-    let timeRemaining = 30;
+    // Game state
+    let playerName = "";
+    let playerClass = "";
+    let playerNumber = "";
+    let gameSessionId = "";
+    let currentSet = 1;
+    let score = 0;
+    let scoreAtSetStart = 0;
+    let setScores = [];
+    let correctAnswers = 0;
+    let wrongAnswers = 0;
+    let totalTime = 0;
+    let timeLeft = 60;
     let timerInterval = null;
-    let gameActive = false;
-    let shuffledFoods = [];
-    let stageScores = [];
-    let stageTimes = [];
-    
-    // Player Info
-    let playerName = '';
-    let playerClass = '';
-    let playerNumber = '';
+    let currentQuestions = [];
+    let allAnswers = [];
+    let gameCards = [];
+    let flippedCards = [];
+    let matchedPairs = 0;
+    let setStartTime = 0;
+    let isProcessing = false;
 
-    // Drag State
-    let draggedItemElement = null;
-    let clonedDragItem = null;
+    // ระบบเสียง (Audio)
+    const flipSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3');
+    flipSound.volume = 0.7; // ปรับระดับเสียง (0.0 - 1.0)
 
-    // --- Core Logic ---
-    function generateStages() {
-      const stages = [[], [], [], [], []];
-      // สร้างคลังอาหารแบบสุ่ม 1 กองใหญ่ (50 รายการ) ไว้ใช้ร่วมกันทั้ง 5 ด่าน
-      let available = [...allFoods].sort(() => Math.random() - 0.5);
+    // Config
+    const defaultConfig = {
+      game_title: "เกมพลิกการ์ด\nจับคู่ช่วงวัย",
+      instruction_text: "เปิดการ์ดแล้วจับคู่ช่วงวัยกับลักษณะการเจริญเติบโต",
+      primary_color: "#667eea",
+      secondary_color: "#f5576c",
+      accent_color: "#764ba2",
+      // ===== ตั้งค่า Google Apps Script URL ตรงนี้ =====
+      sheet_url: 'https://script.google.com/macros/s/AKfycby4TZ3C7QCEtuIlWj7c-0XYWpvNMOepiVW5wdg5Qu44xHbLLKzs1tzIoyi0P9IXq9d3/exec'
+      // =================================================
+    };
+
+    let config = { ...defaultConfig };
+
+    // Title colors
+    const titleColors = ['#ef4444', '#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#6366f1'];
+
+    function renderTitle() {
+      const title = config.game_title || defaultConfig.game_title;
+      const titleEl = document.getElementById('game-title');
+      titleEl.innerHTML = '';
       
-      for (let stage = 0; stage < 5; stage++) {
-        const stageItems = [];
-        
-        // พยายามดึงอาหารให้ครบทุกหมู่ก่อนในแต่ละด่าน (หมู่ละ 1 อย่างเป็นอย่างน้อย)
-        const categories = ['protein', 'carbohydrate', 'fat', 'vitamin', 'mineral', 'water'];
-        categories.forEach(cat => {
-            const itemIndex = available.findIndex(f => f.category === cat);
-            if(itemIndex > -1) {
-                stageItems.push({ id: `stg${stage}_${stageItems.length}`, ...available[itemIndex] });
-                available.splice(itemIndex, 1); // ดึงออกแล้วลบออกจากกองใหญ่
-            }
-        });
-
-        // สุ่มดึงอาหารที่เหลือให้ครบ 10 อย่างต่อด่าน
-        while(stageItems.length < 10 && available.length > 0) {
-            const rIdx = Math.floor(Math.random() * available.length);
-            stageItems.push({ id: `stg${stage}_${stageItems.length}`, ...available[rIdx] });
-            available.splice(rIdx, 1); // ดึงออกแล้วลบออกจากกองใหญ่
+      let charIndex = 0;
+      [...title].forEach((char) => {
+        if (char === '\n') {
+          titleEl.appendChild(document.createElement('br'));
+          return;
         }
-        
-        // สลับตำแหน่งอาหารทั้ง 10 อย่างในด่านนั้นๆ
-        stages[stage] = stageItems.sort(() => Math.random() - 0.5);
-      }
-      return stages;
-    }
-
-    function startGame(e) {
-      e.preventDefault();
-      initAudio();
-      
-      playerName = document.getElementById('player-name').value;
-      playerClass = document.getElementById('player-class').value;
-      playerNumber = document.getElementById('player-number').value;
-      
-      stageData = generateStages();
-      currentStage = 1;
-      totalScore = 0;
-      stageScores = [];
-      stageTimes = [];
-      
-      document.getElementById('welcome-modal').classList.add('hidden');
-      initStage(1);
-    }
-
-    function initStage(stageNum) {
-      currentStage = stageNum;
-      stageScore = 0;
-      matchedCount = 0;
-      timeRemaining = 30;
-      gameActive = true;
-      
-      // Update UI
-      document.getElementById('current-stage').textContent = currentStage;
-      document.getElementById('score').textContent = totalScore;
-      document.getElementById('timer').textContent = timeRemaining;
-      document.getElementById('timer').classList.remove('text-red-500');
-      updateProgress();
-      
-      // Clear Drop Zones
-      document.querySelectorAll('.matched-items').forEach(container => {
-        container.innerHTML = '';
+        const span = document.createElement('span');
+        span.className = 'title-letter';
+        span.textContent = char === ' ' ? '\u00A0' : char;
+        span.style.color = titleColors[charIndex % titleColors.length];
+        span.style.animationDelay = `${charIndex * 0.1}s`;
+        titleEl.appendChild(span);
+        charIndex++;
       });
+    }
+
+    function shuffleArray(array) {
+      const shuffled = [...array];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      return shuffled;
+    }
+
+    function generateQuestionSets() {
+      // Return pre-defined sets directly
+      return questionSetsData;
+    }
+
+    let questionSets = [];
+
+    function startGame() {
+      playerName = document.getElementById('player-name').value.trim();
+      playerClass = document.getElementById('player-class').value;
+      playerNumber = document.getElementById('player-number').value.trim();
+
+      if (!playerName) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'กรุณากรอกชื่อ',
+          text: 'กรุณากรอกชื่อของคุณก่อนเริ่มเกม',
+          confirmButtonColor: '#667eea',
+          confirmButtonText: 'ตกลง'
+        });
+        return;
+      }
       
-      // Render Foods
-      shuffledFoods = [...stageData[currentStage - 1]];
-      renderFoodItems();
+      Swal.fire({
+        icon: 'success',
+        title: `ยินดีต้อนรับ ${playerName}!`,
+        text: 'พร้อมเริ่มเล่นเกมจับคู่แล้ว!',
+        confirmButtonText: 'เริ่มเลย!',
+        confirmButtonColor: '#667eea'
+      }).then(() => {
+        currentSet = 1;
+        score = 0;
+        scoreAtSetStart = 0;
+        setScores = [];
+        correctAnswers = 0;
+        wrongAnswers = 0;
+        totalTime = 0;
+        allAnswers = [];
+        gameSessionId = Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+        questionSets = generateQuestionSets();
+
+        showPage('game-page');
+        loadSet(currentSet);
+      });
+    }
+
+    function loadSet(setNum) {
+      currentQuestions = questionSets[setNum - 1];
+      gameCards = [];
+      flippedCards = [];
+      matchedPairs = 0;
+      timeLeft = 60;
+      setStartTime = Date.now();
+      isProcessing = false;
+      scoreAtSetStart = score;
       
-      // Modals
-      document.getElementById('stage-complete-modal').classList.add('hidden');
-      document.getElementById('timeout-modal').classList.add('hidden');
-      document.getElementById('stage-container').classList.remove('hidden');
+      document.getElementById('current-set').textContent = setNum;
+      document.getElementById('display-name').textContent = playerName;
+      document.getElementById('score').textContent = score;
+      document.getElementById('timer').textContent = timeLeft;
+      document.getElementById('progress-bar').style.width = '100%';
       
+      renderCards();
       startTimer();
     }
 
-    function renderFoodItems() {
-      const container = document.getElementById('food-container');
-      container.innerHTML = '';
+    function renderCards() {
+      // Create card pairs: age on front, characteristic on back
+      const cards = [];
+      currentQuestions.forEach((q, i) => {
+        cards.push({
+          id: `age-${i}`,
+          index: i,
+          isAge: true,
+          ageId: q.age, // Use age text as unique identifier
+          text: q.age,
+          emoji: q.emoji,
+          pair: `char-${i}`
+        });
+        cards.push({
+          id: `char-${i}`,
+          index: i,
+          isAge: false,
+          ageId: q.age, // Same age text for matching
+          text: q.characteristic,
+          emoji: '✨',
+          pair: `age-${i}`
+        });
+      });
       
-      shuffledFoods.forEach((food, index) => {
-        const item = document.createElement('div');
-        item.className = 'food-item bg-white rounded-xl px-3 py-2 sm:px-4 sm:py-3 shadow-md flex items-center gap-2 floating border-2 border-gray-100';
-        item.setAttribute('draggable', 'true');
-        item.setAttribute('data-id', food.id);
-        item.setAttribute('data-category', food.category);
-        item.style.animationDelay = `${index * 0.1}s`;
+      const shuffledCards = shuffleArray(cards);
+      gameCards = shuffledCards;
+      
+      const grid = document.getElementById('game-grid');
+      grid.innerHTML = '';
+      
+      shuffledCards.forEach((card, idx) => {
+        const flipCard = document.createElement('div');
+        flipCard.className = 'flip-card';
+        flipCard.dataset.cardId = card.id;
+        flipCard.dataset.ageId = card.ageId;
+        flipCard.dataset.pair = card.pair;
         
-        item.innerHTML = `<span>${food.emoji}</span><span>${food.name}</span>`;
+        const imageUrl = card.isAge ? ageImageMap[card.text] : null;
+        const backContent = card.isAge 
+          ? (imageUrl 
+              ? `<img src="${imageUrl}" alt="${card.text}" loading="lazy" style="width: 100%; height: 100%; object-fit: cover; border-radius: 0.75rem;" onerror="console.error('Image failed to load:', this.src); this.style.background='#e5e7eb'; this.alt='Image unavailable';">` 
+              : `<div>${card.text}</div>`)
+          : `<div>${card.text}</div>`;
         
-        // Desktop Drag Events
-        item.addEventListener('dragstart', handleDragStart);
-        item.addEventListener('dragend', handleDragEnd);
-        
-        // Mobile Touch Events (Custom Drag Implementation)
-        item.addEventListener('touchstart', handleTouchStart, {passive: false});
-        item.addEventListener('touchmove', handleTouchMove, {passive: false});
-        item.addEventListener('touchend', handleTouchEnd);
-        
-        container.appendChild(item);
+        flipCard.innerHTML = `
+          <div class="flip-card-inner">
+            <div class="flip-card-front">
+              <div class="flip-card-front-emoji"></div>
+            </div>
+            <div class="flip-card-back">
+              ${backContent}
+            </div>
+          </div>
+        `;
+        flipCard.onclick = () => clickCard(flipCard, card);
+        grid.appendChild(flipCard);
       });
     }
 
-    // --- Drag and Drop Handlers (Desktop) ---
-    function handleDragStart(e) {
-      if (!gameActive) return;
-      draggedItemElement = this;
-      this.classList.add('dragging');
-      this.classList.remove('floating');
-      if(e.dataTransfer) {
-        e.dataTransfer.setData('text/plain', this.dataset.id); // ดึง ID มาเผื่อใช้
-        e.dataTransfer.effectAllowed = 'move';
+    function clickCard(element, card) {
+      if (isProcessing) return;
+      if (element.classList.contains('flipped')) return;
+      if (element.classList.contains('matched')) return;
+      if (flippedCards.includes(card.id)) return;
+      
+      // เล่นเสียงพลิกการ์ด
+      try {
+        flipSound.currentTime = 0; // รีเซ็ตเสียงให้เริ่มใหม่ทุกครั้งที่กด
+        flipSound.play().catch(e => console.log('Audio play failed:', e));
+      } catch (err) {}
+      
+      element.classList.add('flipped');
+      flippedCards.push(card.id);
+      
+      if (flippedCards.length === 2) {
+        checkMatch();
       }
     }
 
-    function handleDragEnd(e) {
-      this.classList.remove('dragging');
-      // แก้ไขบัค: เช็คว่าตัวแม่ (parentElement) ยังมีอยู่ไหมก่อนอ้างอิง
-      if(this.parentElement && this.parentElement.id === 'food-container') {
-         this.classList.add('floating');
-      }
-      draggedItemElement = null;
-    }
-
-    // --- Touch Handlers (Mobile) ---
-    function handleTouchStart(e) {
-      if (!gameActive || e.touches.length > 1) return;
-      initAudio(); // Ensure audio context is ready on first interaction
+    function checkMatch() {
+      isProcessing = true;
+      const card1Id = flippedCards[0];
+      const card2Id = flippedCards[1];
       
-      draggedItemElement = this;
-      this.classList.remove('floating');
-      this.style.opacity = '0.3';
+      const el1 = document.querySelector(`[data-card-id="${card1Id}"]`);
+      const el2 = document.querySelector(`[data-card-id="${card2Id}"]`);
       
-      const touch = e.touches[0];
-      const rect = this.getBoundingClientRect();
+      const ageId1 = el1.dataset.ageId;
+      const ageId2 = el2.dataset.ageId;
       
-      // Create a visual clone for dragging
-      clonedDragItem = this.cloneNode(true);
-      clonedDragItem.className = 'food-item bg-white rounded-xl px-3 py-2 sm:px-4 sm:py-3 shadow-md flex items-center gap-2 touch-clone border-2 border-gray-100';
-      clonedDragItem.style.width = rect.width + 'px';
+      const isMatch = ageId1 === ageId2;
       
-      // Center clone to finger
-      updateClonePosition(touch.clientX, touch.clientY);
-      
-      document.body.appendChild(clonedDragItem);
-      
-      if(e.cancelable) e.preventDefault(); 
-    }
-
-    function handleTouchMove(e) {
-      if (!clonedDragItem || !gameActive) return;
-      if(e.cancelable) e.preventDefault(); // Stop scrolling
-      
-      const touch = e.touches[0];
-      updateClonePosition(touch.clientX, touch.clientY);
-      
-      // (touch-clone ถูกตั้งค่า pointer-events: none ไว้แล้ว จึงทะลุไปหาตัวด้านล่างได้เลย)
-      const elemBelow = document.elementFromPoint(touch.clientX, touch.clientY);
-      
-      // Highlight drop zone
-      document.querySelectorAll('.drop-zone').forEach(z => z.classList.remove('drag-over'));
-      const dropZone = elemBelow ? elemBelow.closest('.drop-zone') : null;
-      if (dropZone) {
-        dropZone.classList.add('drag-over');
-      }
-    }
-
-    function handleTouchEnd(e) {
-      if (!clonedDragItem) return;
-      
-      const touch = e.changedTouches[0];
-      const elemBelow = document.elementFromPoint(touch.clientX, touch.clientY);
-      const dropZone = elemBelow ? elemBelow.closest('.drop-zone') : null;
-      
-      clonedDragItem.remove();
-      clonedDragItem = null;
-      
-      document.querySelectorAll('.drop-zone').forEach(z => z.classList.remove('drag-over'));
-      
-      if (draggedItemElement) {
-        draggedItemElement.style.opacity = '1';
-        if (dropZone && gameActive) {
-          processDrop(dropZone, draggedItemElement);
+      setTimeout(() => {
+        if (isMatch) {
+          el1.classList.add('matched');
+          el2.classList.add('matched');
+          score += 10;
+          correctAnswers++;
+          matchedPairs++;
+          document.getElementById('score').textContent = score;
+          
+          const card1Data = gameCards.find(c => c.id === card1Id);
+          const card2Data = gameCards.find(c => c.id === card2Id);
+          
+          const ageCard = card1Data.isAge ? card1Data : card2Data;
+          const charCard = card1Data.isAge ? card2Data : card1Data;
+          
+          allAnswers.push({
+            age: ageCard.text,
+            correctAnswer: charCard.text,
+            userAnswer: charCard.text,
+            isCorrect: true
+          });
+          
+          flippedCards = [];
+          isProcessing = false;
+          
+          if (matchedPairs === 4) {
+            completeSet();
+          }
         } else {
-          draggedItemElement.classList.add('floating');
+          wrongAnswers++;
+          el1.classList.remove('flipped');
+          el2.classList.remove('flipped');
+          flippedCards = [];
+          isProcessing = false;
         }
-      }
-      draggedItemElement = null;
+      }, 600);
     }
 
-    function updateClonePosition(x, y) {
-      if(!clonedDragItem) return;
-      // Offset slightly up and left so user can see what they are dragging
-      clonedDragItem.style.left = (x - (clonedDragItem.offsetWidth / 2)) + 'px';
-      clonedDragItem.style.top = (y - (clonedDragItem.offsetHeight / 2) - 20) + 'px';
-    }
-
-    // --- Drop Zone Listeners (Desktop) ---
-    document.querySelectorAll('.drop-zone').forEach(zone => {
-      zone.addEventListener('dragenter', (e) => {
-        e.preventDefault();
-        if(gameActive) zone.classList.add('drag-over');
-      });
-      zone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        if(gameActive) zone.classList.add('drag-over');
-      });
-      zone.addEventListener('dragleave', (e) => {
-        // ป้องกันกล่องกระพริบตอนลากผ่านตัวหนังสือด้านในกล่อง
-        if (e.relatedTarget && e.currentTarget.contains(e.relatedTarget)) return;
-        zone.classList.remove('drag-over');
-      });
-      zone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        zone.classList.remove('drag-over');
-        
-        let item = draggedItemElement;
-        
-        // กรณีเชื่อมโยงตัวแปรหลุด ให้ใช้วิธีดึงจาก ID แทน (ปลอดภัยขึ้นมาก)
-        if (!item && e.dataTransfer) {
-            const foodId = e.dataTransfer.getData('text/plain');
-            item = document.querySelector(`[data-id="${foodId}"]`);
-        }
-        
-        if (item && gameActive) {
-          processDrop(zone, item);
-        }
-      });
-    });
-
-    // --- Match Logic ---
-    function processDrop(dropZone, item) {
-      const targetCategory = dropZone.dataset.category;
-      const itemCategory = item.dataset.category;
+    function completeSet() {
+      clearInterval(timerInterval);
+      const setTime = Math.round((Date.now() - setStartTime) / 1000);
+      totalTime += setTime;
       
-      if (targetCategory === itemCategory) {
-        // MATCH SUCCESS
-        playSuccessSound();
-        
-        // Clone for matched area to style differently
-        const matchedObj = item.cloneNode(true);
-        matchedObj.className = 'bg-white text-black rounded-md px-2 py-1 flex items-center gap-1 shadow-sm text-xs sm:text-sm font-bold matched mb-1';
-        matchedObj.removeAttribute('draggable');
-        matchedObj.querySelector('span:first-child').style.fontSize = '1.2rem'; // smaller emoji
-        matchedObj.style.opacity = '1';
-        matchedObj.style.animationDelay = '0s';
-        
-        dropZone.querySelector('.matched-items').appendChild(matchedObj);
-        item.remove(); // Remove from source
-        
-        stageScore += 10;
-        matchedCount++;
-        totalScore += 10;
-        
-        updateScore();
-        updateProgress();
-        createTinyConfetti(dropZone);
-        
-        if (matchedCount >= 10) {
-          handleStageComplete();
-        }
-      } else {
-        // MATCH FAIL
-        playErrorSound();
-        item.classList.add('wrong-match');
-        
-        stageScore = Math.max(0, stageScore - 5);
-        totalScore = Math.max(0, totalScore - 5);
-        timeRemaining = Math.max(0, timeRemaining - 1); // Penalty
-        
-        updateScore();
-        updateTimerDisplay();
-        
-        setTimeout(() => {
-          if(item) item.classList.remove('wrong-match');
-        }, 500);
-      }
+      // Calculate bonus points: 5 points per second remaining
+      const bonusPoints = timeLeft * 5;
+      score += bonusPoints;
+      document.getElementById('score').textContent = score;
+      setScores.push(score - scoreAtSetStart); // บันทึกคะแนนชุดนี้
+      saveToSheet(); // บันทึก Google Sheet ทันทีหลังผ่านชุด
+      
+      setTimeout(() => {
+        Swal.fire({
+          icon: 'success',
+          title: `ชุดที่ ${currentSet} เสร็จสิ้น!`,
+          html: `<p>ถูก: <span class="text-green-600 font-bold">4</span> ข้อ</p>
+                 <p>ผิด: <span class="text-red-600 font-bold">0</span> ข้อ</p>
+                 <p>คะแนนพื้นฐาน: <span class="text-purple-600 font-bold">40</span></p>
+                 <p>โบนัสเวลา: <span class="text-yellow-600 font-bold">+${bonusPoints}</span> (${timeLeft}ว × 5 คะแนน/วินาที)</p>
+                 <p class="text-lg font-bold mt-2">รวม: <span class="text-purple-600">${score}</span> คะแนน</p>`,
+          confirmButtonText: currentSet < 5 ? 'ไปชุดถัดไป' : 'ดูสรุปผล',
+          confirmButtonColor: '#667eea',
+          allowOutsideClick: false
+        }).then(() => {
+          nextSet();
+        });
+      }, 500);
     }
 
-    // --- Timers and Score ---
+    function resetCards() {
+      flippedCards = [];
+      isProcessing = false;
+      document.querySelectorAll('.flip-card.flipped:not(.matched)').forEach(card => {
+        card.classList.remove('flipped');
+      });
+    }
+
     function startTimer() {
       if (timerInterval) clearInterval(timerInterval);
       
       timerInterval = setInterval(() => {
-        timeRemaining--;
-        updateTimerDisplay();
+        timeLeft--;
+        document.getElementById('timer').textContent = timeLeft;
+        document.getElementById('progress-bar').style.width = `${(timeLeft / 60) * 100}%`;
         
-        if (timeRemaining <= 5) {
-          document.getElementById('timer').classList.add('text-red-500', 'animate-pulse');
-        }
-        
-        if (timeRemaining <= 0) {
-          handleTimeout();
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          handleTimeUp();
         }
       }, 1000);
     }
 
-    function updateTimerDisplay() {
-      document.getElementById('timer').textContent = timeRemaining;
+    function handleTimeUp() {
+      setScores.push(score - scoreAtSetStart); // บันทึกคะแนนชุดที่หมดเวลา
+      saveToSheet(); // บันทึก Google Sheet แม้หมดเวลา
+      Swal.fire({
+        icon: 'warning',
+        title: 'หมดเวลา!',
+        text: 'ไปชุดถัดไป',
+        confirmButtonText: 'ตกลง',
+        confirmButtonColor: '#667eea',
+        allowOutsideClick: false
+      }).then(() => {
+        nextSet();
+      });
     }
 
-    function updateScore() {
-      document.getElementById('score').textContent = totalScore;
-      // Animate score pop
-      const scoreEl = document.getElementById('score');
-      scoreEl.style.transform = 'scale(1.5)';
-      setTimeout(() => scoreEl.style.transform = 'scale(1)', 200);
-    }
-
-    function updateProgress() {
-      const percent = (matchedCount / 10) * 100;
-      document.getElementById('progress-bar').style.width = `${percent}%`;
-      document.getElementById('matched-count').textContent = matchedCount;
-    }
-
-    // --- End Conditions ---
-    function handleStageComplete() {
-      clearInterval(timerInterval);
-      gameActive = false;
-      playWinStageSound();
-      
-      const timeBonus = timeRemaining * 5;
-      totalScore += timeBonus;
-      stageScore += timeBonus;
-      
-      stageScores.push(stageScore);
-      stageTimes.push(30 - timeRemaining);
-      
-      document.getElementById('completed-stage').textContent = currentStage;
-      document.getElementById('stage-score').textContent = stageScore;
-      document.getElementById('time-bonus-val').textContent = timeBonus;
-      document.getElementById('score').textContent = totalScore;
-      
-      createScreenConfetti();
-      
-      setTimeout(() => {
-        if (currentStage >= 5) {
-          showFinalSummary();
-        } else {
-          document.getElementById('stage-complete-modal').classList.remove('hidden');
-        }
-      }, 1000);
-    }
-
-    function handleTimeout() {
-      clearInterval(timerInterval);
-      gameActive = false;
-      playErrorSound();
-
-      document.getElementById('timeout-score').textContent = stageScore;
-      document.getElementById('timeout-matched').textContent = matchedCount;
-      document.getElementById('timeout-modal').classList.remove('hidden');
-      // บันทึกเมื่อหมดเวลา — คะแนนด่านนี้ไม่นับ (ผ่านแค่ stageScores.length ด่าน)
-      saveToSheet(`หมดเวลา ด่านที่ ${currentStage}`);
-    }
-
-    function retryStage() {
-      // Re-init current stage without resetting total score to 0, just undo this stage's score
-      totalScore -= stageScore; 
-      initStage(currentStage);
-    }
-
-    function showFinalSummary() {
-      document.getElementById('stage-complete-modal').classList.add('hidden');
-      
-      const totalTimeUsed = stageTimes.reduce((a,b) => a+b, 0);
-      const avgTime = (totalTimeUsed / 5).toFixed(1);
-      
-      document.getElementById('final-player-name').textContent = `ยินดีด้วย ${playerName}! (${playerClass} เลขที่ ${playerNumber})`;
-      document.getElementById('total-final-score').textContent = totalScore;
-      document.getElementById('total-time').textContent = totalTimeUsed;
-      document.getElementById('avg-time').textContent = avgTime;
-      
-      const breakdownHtml = stageScores.map((score, idx) => `
-        <div class="flex justify-between items-center border-b border-gray-200 py-1">
-          <span>ด่าน ${idx + 1}</span>
-          <span class="font-bold text-amber-600">${score} คะแนน</span>
-        </div>
-      `).join('');
-      
-      document.getElementById('stage-breakdown').innerHTML = breakdownHtml;
-      document.getElementById('final-summary-modal').classList.remove('hidden');
-      
-      // Lots of confetti
-      for(let i=0; i<3; i++) {
-        setTimeout(createScreenConfetti, i * 800);
+    function nextSet() {
+      if (currentSet < 5) {
+        currentSet++;
+        loadSet(currentSet);
+      } else {
+        showSummary();
       }
-      // Save to Google Sheet
+    }
+
+    function showSummary() {
+      showPage('summary-page');
+      document.getElementById('summary-name').textContent = playerName;
+      document.getElementById('summary-score').textContent = `${score}`;
       saveToSheet();
+      Swal.fire({
+        icon: 'success',
+        title: 'เสร็จสิ้น! 🎉',
+        text: `คุณได้ ${score} คะแนน`,
+        confirmButtonColor: '#667eea'
+      });
     }
 
-    // --- Visual Effects ---
-    function createTinyConfetti(parent) {
-      for(let i=0; i<5; i++) {
-        const conf = document.createElement('div');
-        conf.className = 'confetti';
-        conf.style.left = (Math.random() * 100) + '%';
-        conf.style.top = '50%';
-        conf.style.width = '8px';
-        conf.style.height = '8px';
-        conf.style.backgroundColor = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'][Math.floor(Math.random()*5)];
-        conf.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
-        parent.appendChild(conf);
-        setTimeout(() => conf.remove(), 1000);
-      }
+    function playAgain() {
+      currentSet = 1;
+      score = 0;
+      scoreAtSetStart = 0;
+      setScores = [];
+      gameSessionId = Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+      correctAnswers = 0;
+      wrongAnswers = 0;
+      totalTime = 0;
+      allAnswers = [];
+      questionSets = generateQuestionSets();
+      
+      showPage('game-page');
+      loadSet(currentSet);
     }
 
-    function createScreenConfetti() {
-      const colors = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
-      for(let i=0; i<50; i++) {
-        const conf = document.createElement('div');
-        conf.className = 'confetti';
-        conf.style.left = (Math.random() * 100) + 'vw';
-        conf.style.top = (Math.random() * 50) + 50 + 'vh';
-        conf.style.width = (Math.random() * 10 + 5) + 'px';
-        conf.style.height = (Math.random() * 10 + 5) + 'px';
-        conf.style.backgroundColor = colors[Math.floor(Math.random()*colors.length)];
-        conf.style.position = 'fixed';
-        conf.style.zIndex = '9999';
-        
-        // Randomize animation specific to screen size
-        const angle = Math.random() * Math.PI * 2;
-        const velocity = 15 + Math.random() * 15;
-        const duration = 1 + Math.random();
-        
-        conf.style.transition = `transform ${duration}s cubic-bezier(.25,.8,.25,1), opacity ${duration}s ease`;
-        document.body.appendChild(conf);
-        
-        setTimeout(() => {
-          conf.style.transform = `translate(${Math.cos(angle)*velocity*10}px, -${Math.random()*300 + 200}px) rotate(${Math.random()*720}deg)`;
-          conf.style.opacity = '0';
-        }, 10);
-        
-        setTimeout(() => conf.remove(), duration * 1000 + 100);
-      }
+    function goHome() {
+      if (timerInterval) clearInterval(timerInterval);
+      showPage('home-page');
     }
 
-    // --- Event Listeners Bindings ---
-    document.getElementById('player-form').addEventListener('submit', startGame);
-    
-    document.getElementById('next-stage-btn').addEventListener('click', () => {
-      initStage(currentStage + 1);
-    });
-    
-    document.getElementById('timeout-retry-btn').addEventListener('click', retryStage);
-    
-    document.getElementById('reset-btn').addEventListener('click', () => {
-      if(confirm('คุณแน่ใจหรือไม่ที่จะเริ่มด่านนี้ใหม่? (คะแนนด่านนี้จะถูกรีเซ็ต)')) {
-        retryStage();
-      }
-    });
+    function showPage(pageId) {
+      document.getElementById('home-page').classList.add('hidden');
+      document.getElementById('game-page').classList.add('hidden');
+      document.getElementById('summary-page').classList.add('hidden');
+      document.getElementById(pageId).classList.remove('hidden');
+    }
 
-    // Modals toggles
-    document.getElementById('open-info-btn').addEventListener('click', () => {
-      document.getElementById('info-modal').classList.remove('hidden');
-    });
-    
-    document.getElementById('close-info-btn').addEventListener('click', () => {
-      document.getElementById('info-modal').classList.add('hidden');
-    });
-    
-    document.getElementById('close-info-menu-btn').addEventListener('click', () => {
-      document.getElementById('info-modal').classList.add('hidden');
-    });
+    // Element SDK integration
+    async function onConfigChange(newConfig) {
+      config = { ...defaultConfig, ...newConfig };
+      renderTitle();
+      document.getElementById('instruction-display').textContent = config.instruction_text || defaultConfig.instruction_text;
+    }
 
-    document.getElementById('final-close-btn').addEventListener('click', () => {
-      document.getElementById('final-summary-modal').classList.add('hidden');
-      document.getElementById('stage-container').classList.add('hidden');
-      document.getElementById('welcome-modal').classList.remove('hidden');
-    });
+    function mapToCapabilities(config) {
+      return {
+        recolorables: [
+          {
+            get: () => config.primary_color || defaultConfig.primary_color,
+            set: (value) => {
+              config.primary_color = value;
+              if (window.elementSdk) window.elementSdk.setConfig({ primary_color: value });
+            }
+          },
+          {
+            get: () => config.secondary_color || defaultConfig.secondary_color,
+            set: (value) => {
+              config.secondary_color = value;
+              if (window.elementSdk) window.elementSdk.setConfig({ secondary_color: value });
+            }
+          },
+          {
+            get: () => config.accent_color || defaultConfig.accent_color,
+            set: (value) => {
+              config.accent_color = value;
+              if (window.elementSdk) window.elementSdk.setConfig({ accent_color: value });
+            }
+          }
+        ]
+      };
+    }
 
-    // ===== Google Sheet Config =====
-    const SHEET_URL = 'https://script.google.com/macros/s/AKfycbzZbkJTq8MAb-2Sb_y7RmDnVWKxmLDQuV1u2T8Pkk-EVKDWHoRFx6peW3NC1YwDxQdnAQ/exec';
-    // ================================
+    // ===== Google Sheet Integration =====
+    function getSheetUrl() { return (config.sheet_url || '').trim(); }
 
-    // --- Save per-stage to Google Sheet ---
-    // --- Save to Google Sheet (เรียกเมื่อจบเกม ทั้งผ่านและหมดเวลา) ---
-    async function saveToSheet(status) {
-      if (!SHEET_URL || SHEET_URL.includes('YOUR_SCRIPT_ID')) return;
+    async function saveToSheet() {
+      const url = getSheetUrl();
+      if (!url || url.includes('YOUR_SCRIPT_ID')) return;
       const statusEl = document.getElementById('save-status');
-      if (statusEl) {
-        statusEl.textContent = '⏳ กำลังบันทึก…';
-        statusEl.className = 'text-center text-sm font-bold my-2 min-h-[20px] text-white/60';
-      }
-      const totalTimeUsed = stageTimes.reduce((a, b) => a + b, 0);
-      // pad stageScores ให้ครบ 5 ด่าน (ด่านที่ยังไม่เล่น = 0)
-      const scores = [0,1,2,3,4].map(i => stageScores[i] || 0);
+      if (statusEl) { statusEl.textContent = '⏳ กำลังบันทึก…'; statusEl.className = 'text-center text-sm font-bold my-2 text-gray-500'; }
+      const scores = [0,1,2,3,4].map(i => setScores[i] || 0);
       const params = new URLSearchParams({
-        action: 'save',
-        name:   playerName,
-        cls:    playerClass,
-        num:    playerNumber,
-        total:  totalScore,
+        action:  'save',
+        session: gameSessionId,
+        name:    playerName,
+        cls:     playerClass,
+        num:     playerNumber,
+        total:   score,
         s1: scores[0], s2: scores[1], s3: scores[2], s4: scores[3], s5: scores[4],
-        time:   totalTimeUsed,
-        stages: stageScores.length,   // จำนวนด่านที่ผ่าน
-        status: status || 'จบเกม'     // สถานะ: จบเกม / หมดเวลา ด่านที่ X
+        correct: correctAnswers,
+        wrong:   wrongAnswers,
+        time:    totalTime
       });
       try {
-        await fetch(`${SHEET_URL}?${params}`, { mode: 'no-cors' });
-        if (statusEl) {
-          statusEl.textContent = '✅ บันทึกคะแนนลง Google Sheet เรียบร้อย!';
-          statusEl.className = 'text-center text-sm font-bold my-2 min-h-[20px] text-green-400';
-        }
+        await fetch(`${url}?${params}`, { mode: 'no-cors' });
+        if (statusEl) { statusEl.textContent = '✅ บันทึกคะแนนเรียบร้อย!'; statusEl.className = 'text-center text-sm font-bold my-2 text-green-600'; }
       } catch {
-        if (statusEl) {
-          statusEl.textContent = '❌ บันทึกไม่สำเร็จ';
-          statusEl.className = 'text-center text-sm font-bold my-2 min-h-[20px] text-red-400';
-        }
+        if (statusEl) { statusEl.textContent = '❌ บันทึกไม่สำเร็จ'; statusEl.className = 'text-center text-sm font-bold my-2 text-red-500'; }
       }
     }
 
-    // --- Load Past Players for Autocomplete ---
     async function loadPastPlayers() {
-      if (!SHEET_URL || SHEET_URL.includes('YOUR_SCRIPT_ID')) return;
+      const url = getSheetUrl();
+      if (!url || url.includes('YOUR_SCRIPT_ID')) return;
       try {
-        const res = await fetch(`${SHEET_URL}?t=${Date.now()}`);
+        const res = await fetch(`${url}?t=${Date.now()}`);
         const rows = await res.json();
         const names = [...new Set(rows.slice(1).map(r => r[1]).filter(Boolean))];
         const dl = document.getElementById('past-players-list');
-        dl.innerHTML = names.map(n => `<option value="${n}">`).join('');
-      } catch { /* silently ignore */ }
+        if (dl) dl.innerHTML = names.map(n => `<option value="${n}">`).join('');
+      } catch {}
     }
 
-    // --- Dashboard ---
+    let _dashboardBackTo = 'home';
     function showDashboard(backTo) {
-      const dash = document.getElementById('dashboard-screen');
+      _dashboardBackTo = backTo || 'home';
+      document.getElementById('home-page').classList.add('hidden');
+      document.getElementById('summary-page').classList.add('hidden');
+      const dash = document.getElementById('dashboard-page');
       dash.classList.remove('hidden');
       dash.style.display = 'flex';
-      dash.dataset.backTo = backTo || 'welcome';
       loadRankings();
     }
 
-    async function loadRankings() {
-      const statusEl = document.getElementById('dash-load-status');
-      const tbody = document.getElementById('ranking-table-body');
-      const noNotice = document.getElementById('no-sheet-notice');
-
-      if (!SHEET_URL || SHEET_URL.includes('YOUR_SCRIPT_ID')) {
-        noNotice.classList.remove('hidden');
-        statusEl.textContent = 'ไม่มี URL';
-        tbody.innerHTML = '<tr><td colspan="9" class="text-center py-12 text-white/30">ยังไม่ได้ตั้งค่า SHEET_URL</td></tr>';
-        return;
-      }
-      noNotice.classList.add('hidden');
-      statusEl.textContent = '⏳ กำลังโหลด…';
-
-      try {
-        const res = await fetch(`${SHEET_URL}?t=${Date.now()}`);
-        const rows = await res.json();
-        // schema: [date(0), name(1), cls(2), num(3), total(4), s1(5),s2(6),s3(7),s4(8),s5(9), time(10)]
-        const dataRows = rows.slice(1).filter(r => r[1]);
-        dataRows.sort((a, b) => (Number(b[4]) || 0) - (Number(a[4]) || 0));
-
-        document.getElementById('dash-total-games').textContent = dataRows.length;
-        const scores = dataRows.map(r => Number(r[4]) || 0);
-        document.getElementById('dash-top-score').textContent = scores.length ? Math.max(...scores) : 0;
-        document.getElementById('dash-avg-score').textContent = scores.length ? Math.round(scores.reduce((a,b)=>a+b,0)/scores.length) : 0;
-
-        if (!dataRows.length) {
-          tbody.innerHTML = '<tr><td colspan="9" class="text-center py-12 text-white/30">ยังไม่มีข้อมูลการเล่น</td></tr>';
-          statusEl.textContent = 'โหลดสำเร็จ — ยังไม่มีข้อมูล';
-          return;
-        }
-
-        const medals = ['🥇', '🥈', '🥉'];
-        tbody.innerHTML = dataRows.map((r, i) => {
-          const rank = i < 3 ? medals[i] : `#${i + 1}`;
-          // schema: date(0),name(1),cls(2),num(3),total(4),s1-s5(5-9),time(10),stages(11),status(12)
-          const stages = Number(r[11]) || 0;
-          const status = r[12] || 'จบเกม';
-          const isComplete = status === 'จบเกม';
-          const statusBadge = isComplete
-            ? `<span class="px-2 py-0.5 bg-green-500/30 rounded-full text-green-300 text-xs">✅ จบเกม</span>`
-            : `<span class="px-2 py-0.5 bg-red-500/20 rounded-full text-red-300 text-xs">⏰ ${status}</span>`;
-          const dateStr = r[0] ? String(r[0]).replace('T',' ').replace(/\.\d+Z$/,'') : '-';
-          return `
-            <tr class="border-t border-white/5 hover:bg-white/5 transition-colors">
-              <td class="px-4 py-3 text-center text-lg">${rank}</td>
-              <td class="px-4 py-3 font-semibold text-white">${r[1]||'-'}</td>
-              <td class="px-4 py-3 text-center text-white/70">${r[2]||'-'}</td>
-              <td class="px-4 py-3 text-center text-white/70">${r[3]||'-'}</td>
-              <td class="px-4 py-3 text-center font-black text-2xl text-yellow-300">${Number(r[4])||0}</td>
-              <td class="px-4 py-3 text-center font-bold text-white/80">${stages} / 5</td>
-              <td class="px-4 py-3 text-center">${statusBadge}</td>
-              <td class="px-4 py-3 text-center text-white/70">${Number(r[10])||0} วิ</td>
-              <td class="px-4 py-3 text-center text-white/40 text-xs hidden md:table-cell">${dateStr}</td>
-            </tr>`;
-        }).join('');
-        statusEl.textContent = `โหลดสำเร็จ — ${dataRows.length} รายการ`;
-      } catch {
-        statusEl.textContent = '❌ โหลดข้อมูลไม่สำเร็จ';
-        tbody.innerHTML = '<tr><td colspan="9" class="text-center py-12 text-red-400/60">ไม่สามารถดึงข้อมูลได้</td></tr>';
+    function closeDashboard() {
+      document.getElementById('dashboard-page').classList.add('hidden');
+      document.getElementById('dashboard-page').style.display = '';
+      if (_dashboardBackTo === 'summary') {
+        document.getElementById('summary-page').classList.remove('hidden');
+      } else {
+        document.getElementById('home-page').classList.remove('hidden');
       }
     }
 
-    // --- Dashboard Navigation ---
-    document.getElementById('dashboard-btn').addEventListener('click', () => showDashboard('welcome'));
-    document.getElementById('final-dashboard-btn').addEventListener('click', () => showDashboard('final'));
-    document.getElementById('dash-refresh-btn').addEventListener('click', loadRankings);
-    document.getElementById('dash-back-btn').addEventListener('click', () => {
-      document.getElementById('dashboard-screen').classList.add('hidden');
-      document.getElementById('dashboard-screen').style.display = '';
-      const backTo = document.getElementById('dashboard-screen').dataset.backTo;
-      if (backTo === 'final') {
-        document.getElementById('final-summary-modal').classList.remove('hidden');
-      } else {
-        document.getElementById('welcome-modal').classList.remove('hidden');
+    async function loadRankings() {
+      const url = getSheetUrl();
+      const statusEl = document.getElementById('dash-status');
+      const tbody = document.getElementById('dash-tbody');
+      if (!url || url.includes('YOUR_SCRIPT_ID')) {
+        statusEl.textContent = 'ยังไม่ได้ตั้งค่า SHEET_URL';
+        tbody.innerHTML = '<tr><td colspan="14" class="text-center py-12 text-white/30">ยังไม่ได้ตั้งค่า sheet_url ในโค้ด</td></tr>';
+        return;
+      }
+      statusEl.textContent = '⏳ กำลังโหลด…';
+      try {
+        const res = await fetch(`${url}?t=${Date.now()}`);
+        const rows = await res.json();
+        // schema: [date(0),name(1),cls(2),num(3),total(4),s1-s5(5-9),correct(10),wrong(11),time(12)]
+        const data = rows.slice(1).filter(r => r[1]);
+        data.sort((a,b) => (Number(b[4])||0) - (Number(a[4])||0));
+        document.getElementById('dash-total').textContent = data.length;
+        const scores = data.map(r => Number(r[4])||0);
+        document.getElementById('dash-top').textContent = scores.length ? Math.max(...scores) : 0;
+        document.getElementById('dash-avg').textContent = scores.length ? Math.round(scores.reduce((a,b)=>a+b,0)/scores.length) : 0;
+        if (!data.length) { tbody.innerHTML = '<tr><td colspan="14" class="text-center py-12 text-white/30">ยังไม่มีข้อมูล</td></tr>'; statusEl.textContent = 'ยังไม่มีข้อมูล'; return; }
+        const medals = ['🥇','🥈','🥉'];
+        tbody.innerHTML = data.map((r,i) => {
+          // schema: [date(0),name(1),cls(2),num(3),total(4),s1(5),s2(6),s3(7),s4(8),s5(9),correct(10),wrong(11),time(12)]
+          const rank = i < 3 ? medals[i] : `#${i+1}`;
+          const dateStr = r[0] ? String(r[0]).replace('T',' ').replace(/\.\d+Z$/,'') : '-';
+          // หา set สุดท้ายที่มีคะแนน (ชุดที่ไปถึง)
+          const setScoresArr = [5,6,7,8,9].map(idx => Number(r[idx])||0);
+          const lastSet = setScoresArr.reduce((acc, s, idx) => s > 0 ? idx+1 : acc, 0);
+          const statusBadge = lastSet >= 5
+            ? `<span class="px-1.5 py-0.5 bg-green-500/30 rounded-full text-green-300 text-xs">✅ ครบ 5 ชุด</span>`
+            : `<span class="px-1.5 py-0.5 bg-yellow-500/20 rounded-full text-yellow-300 text-xs">ถึงชุด ${lastSet}/5</span>`;
+          const setCell = (val) => val > 0
+            ? `<td class="px-2 py-3 text-center text-white/80 font-bold hidden lg:table-cell">${val}</td>`
+            : `<td class="px-2 py-3 text-center text-white/30 hidden lg:table-cell">-</td>`;
+          return `<tr class="border-t border-white/5 hover:bg-white/5 transition-colors">
+            <td class="px-4 py-3 text-center text-lg">${rank}</td>
+            <td class="px-4 py-3 font-semibold text-white">
+              <div>${r[1]||'-'}</div>
+              <div class="mt-0.5">${statusBadge}</div>
+            </td>
+            <td class="px-4 py-3 text-center text-white/70">${r[2]||'-'}</td>
+            <td class="px-4 py-3 text-center text-white/70">${r[3]||'-'}</td>
+            <td class="px-4 py-3 text-center font-black text-2xl text-yellow-300">${Number(r[4])||0}</td>
+            ${setScoresArr.map(s => setCell(s)).join('')}
+            <td class="px-4 py-3 text-center text-green-300 font-bold">${Number(r[10])||0}</td>
+            <td class="px-4 py-3 text-center text-red-300 font-bold">${Number(r[11])||0}</td>
+            <td class="px-4 py-3 text-center text-white/70">${Number(r[12])||0} วิ</td>
+            <td class="px-4 py-3 text-center text-white/40 text-xs hidden md:table-cell">${dateStr}</td>
+          </tr>`;
+        }).join('');
+        statusEl.textContent = `โหลดสำเร็จ — ${data.length} รายการ`;
+      } catch {
+        statusEl.textContent = '❌ โหลดไม่สำเร็จ';
+        tbody.innerHTML = '<tr><td colspan="14" class="text-center py-12 text-red-400/60">ไม่สามารถดึงข้อมูลได้</td></tr>';
+      }
+    }
+
+    // Initialize application
+    window.addEventListener('DOMContentLoaded', () => {
+      renderTitle();
+      loadPastPlayers();
+      
+      // Initialize element SDK if available
+      if (window.elementSdk) {
+        window.elementSdk.onConfigChange((newConfig) => {
+          onConfigChange(newConfig);
+          window.elementSdk.updateCapabilities(mapToCapabilities(config));
+        });
+        window.elementSdk.ready();
       }
     });
-
-    // Load past players on page load
-    loadPastPlayers();
-
   </script>
-</body>
+ </body>
 </html>
