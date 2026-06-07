@@ -118,10 +118,11 @@
           </ul>
         </div>
         
+        <datalist id="past-players-list"></datalist>
         <form id="player-form" class="space-y-5 mb-6">
           <div>
-            <label class="block text-white font-bold mb-2 text-xl sm:text-2xl">👤 ชื่อ - นามสกุล</label> 
-            <input type="text" id="player-name" placeholder="กรอกชื่อของคุณ" class="w-full px-4 py-4 border-2 border-transparent rounded-lg focus:outline-none focus:border-white focus:ring-4 focus:ring-emerald-300 text-xl sm:text-2xl shadow-sm" required>
+            <label class="block text-white font-bold mb-2 text-xl sm:text-2xl">👤 ชื่อ - นามสกุล</label>
+            <input type="text" id="player-name" list="past-players-list" autocomplete="off" placeholder="กรอกชื่อของคุณ" class="w-full px-4 py-4 border-2 border-transparent rounded-lg focus:outline-none focus:border-white focus:ring-4 focus:ring-emerald-300 text-xl sm:text-2xl shadow-sm" required>
           </div>
           <div class="grid grid-cols-2 gap-4">
             <div>
@@ -141,8 +142,9 @@
             <span class="text-4xl">🎮</span> เริ่มเล่นเกม 
           </button> 
         </form>
-        <div class="text-center mt-4">
+        <div class="flex flex-col sm:flex-row gap-3 mt-4 items-center justify-center">
           <button id="open-info-btn" type="button" class="text-white/90 hover:text-white underline font-bold text-xl sm:text-2xl">ดูข้อมูลสารอาหารเพิ่มเติม 📚</button>
+          <button id="dashboard-btn" type="button" class="px-6 py-2 bg-white/20 hover:bg-white/30 border border-white/40 rounded-xl text-white font-bold text-lg transition-all">📊 ดู Ranking</button>
         </div>
       </div>
     </div>
@@ -328,9 +330,82 @@
           </div>
         </div>
         
-        <button id="final-close-btn" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-6 py-4 rounded-xl font-bold text-xl hover:shadow-xl transition-all transform hover:-translate-y-1 border-b-4 border-teal-800 active:border-b-0 active:translate-y-0 flex justify-center items-center gap-2"> 
-          <i data-lucide="home"></i> กลับสู่หน้าเริ่มต้น 
-        </button>
+        <div id="save-status" class="text-center text-sm font-bold my-2 min-h-[20px]"></div>
+        <div class="flex flex-col sm:flex-row gap-3">
+          <button id="final-close-btn" class="flex-1 bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-6 py-4 rounded-xl font-bold text-xl hover:shadow-xl transition-all border-b-4 border-teal-800 active:border-b-0 active:translate-y-1 flex justify-center items-center gap-2">
+            <i data-lucide="home"></i> กลับหน้าหลัก
+          </button>
+          <button id="final-dashboard-btn" class="flex-1 bg-gradient-to-r from-violet-500 to-purple-700 text-white px-6 py-4 rounded-xl font-bold text-xl hover:shadow-xl transition-all border-b-4 border-purple-900 active:border-b-0 active:translate-y-1 flex justify-center items-center gap-2">
+            📊 ดู Ranking
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DASHBOARD SCREEN -->
+    <div id="dashboard-screen" class="fixed inset-0 z-[110] hidden flex-col p-4 md:p-8 overflow-y-auto" style="background: linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%)">
+      <div class="max-w-4xl mx-auto w-full text-white">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h2 class="text-3xl md:text-4xl font-black text-yellow-400">📊 Leaderboard</h2>
+            <p class="text-white/50 text-sm mt-1">อันดับคะแนนสูงสุด — เกมจับคู่สารอาหาร</p>
+          </div>
+          <button id="dash-back-btn" class="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl font-bold text-sm transition-all flex items-center gap-2">
+            ← กลับ
+          </button>
+        </div>
+
+        <!-- Stats Summary -->
+        <div class="grid grid-cols-3 gap-3 mb-6">
+          <div class="bg-white/10 rounded-2xl p-4 text-center border border-white/10">
+            <p class="text-3xl font-black text-cyan-400" id="dash-total-games">0</p>
+            <p class="text-xs text-white/60 mt-1">ผู้เล่นทั้งหมด</p>
+          </div>
+          <div class="bg-white/10 rounded-2xl p-4 text-center border border-white/10">
+            <p class="text-3xl font-black text-green-400" id="dash-top-score">0</p>
+            <p class="text-xs text-white/60 mt-1">คะแนนสูงสุด</p>
+          </div>
+          <div class="bg-white/10 rounded-2xl p-4 text-center border border-white/10">
+            <p class="text-3xl font-black text-pink-400" id="dash-avg-score">0</p>
+            <p class="text-xs text-white/60 mt-1">คะแนนเฉลี่ย</p>
+          </div>
+        </div>
+
+        <!-- Refresh + status -->
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-white/50 text-xs" id="dash-load-status">กำลังโหลด…</span>
+          <button id="dash-refresh-btn" class="px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-xs font-bold transition-all">🔄 รีเฟรช</button>
+        </div>
+
+        <!-- Ranking Table -->
+        <div class="bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="bg-white/10 text-white/70 text-xs uppercase tracking-wider">
+                  <th class="px-4 py-3 text-center w-12">อันดับ</th>
+                  <th class="px-4 py-3 text-left">ชื่อ</th>
+                  <th class="px-4 py-3 text-center">ชั้น</th>
+                  <th class="px-4 py-3 text-center">เลขที่</th>
+                  <th class="px-4 py-3 text-center">คะแนนรวม</th>
+                  <th class="px-4 py-3 text-center">ด่านที่ผ่าน</th>
+                  <th class="px-4 py-3 text-center">สถานะ</th>
+                  <th class="px-4 py-3 text-center">เวลารวม</th>
+                  <th class="px-4 py-3 text-center hidden md:table-cell">วันที่</th>
+                </tr>
+              </thead>
+              <tbody id="ranking-table-body">
+                <tr><td colspan="9" class="text-center py-12 text-white/30">ยังไม่มีข้อมูล</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="no-sheet-notice" class="hidden mt-6 bg-yellow-500/20 border border-yellow-400/30 rounded-2xl p-5 text-center">
+          <p class="text-yellow-300 font-bold mb-1">⚠️ ยังไม่ได้ตั้งค่า Google Sheet</p>
+          <p class="text-white/60 text-sm">กรุณาตั้งค่า SHEET_URL ในโค้ดก่อน</p>
+        </div>
       </div>
     </div>
   </div>
@@ -825,10 +900,12 @@
       clearInterval(timerInterval);
       gameActive = false;
       playErrorSound();
-      
+
       document.getElementById('timeout-score').textContent = stageScore;
       document.getElementById('timeout-matched').textContent = matchedCount;
       document.getElementById('timeout-modal').classList.remove('hidden');
+      // บันทึกเมื่อหมดเวลา — คะแนนด่านนี้ไม่นับ (ผ่านแค่ stageScores.length ด่าน)
+      saveToSheet(`หมดเวลา ด่านที่ ${currentStage}`);
     }
 
     function retryStage() {
@@ -862,6 +939,8 @@
       for(let i=0; i<3; i++) {
         setTimeout(createScreenConfetti, i * 800);
       }
+      // Save to Google Sheet
+      saveToSheet();
     }
 
     // --- Visual Effects ---
@@ -939,11 +1018,153 @@
     });
 
     document.getElementById('final-close-btn').addEventListener('click', () => {
-      // Full game reset
       document.getElementById('final-summary-modal').classList.add('hidden');
       document.getElementById('stage-container').classList.add('hidden');
       document.getElementById('welcome-modal').classList.remove('hidden');
     });
+
+    // ===== Google Sheet Config =====
+    const SHEET_URL = 'https://script.google.com/macros/s/AKfycbzZbkJTq8MAb-2Sb_y7RmDnVWKxmLDQuV1u2T8Pkk-EVKDWHoRFx6peW3NC1YwDxQdnAQ/exec';
+    // ================================
+
+    // --- Save per-stage to Google Sheet ---
+    // --- Save to Google Sheet (เรียกเมื่อจบเกม ทั้งผ่านและหมดเวลา) ---
+    async function saveToSheet(status) {
+      if (!SHEET_URL || SHEET_URL.includes('YOUR_SCRIPT_ID')) return;
+      const statusEl = document.getElementById('save-status');
+      if (statusEl) {
+        statusEl.textContent = '⏳ กำลังบันทึก…';
+        statusEl.className = 'text-center text-sm font-bold my-2 min-h-[20px] text-white/60';
+      }
+      const totalTimeUsed = stageTimes.reduce((a, b) => a + b, 0);
+      // pad stageScores ให้ครบ 5 ด่าน (ด่านที่ยังไม่เล่น = 0)
+      const scores = [0,1,2,3,4].map(i => stageScores[i] || 0);
+      const params = new URLSearchParams({
+        action: 'save',
+        name:   playerName,
+        cls:    playerClass,
+        num:    playerNumber,
+        total:  totalScore,
+        s1: scores[0], s2: scores[1], s3: scores[2], s4: scores[3], s5: scores[4],
+        time:   totalTimeUsed,
+        stages: stageScores.length,   // จำนวนด่านที่ผ่าน
+        status: status || 'จบเกม'     // สถานะ: จบเกม / หมดเวลา ด่านที่ X
+      });
+      try {
+        await fetch(`${SHEET_URL}?${params}`, { mode: 'no-cors' });
+        if (statusEl) {
+          statusEl.textContent = '✅ บันทึกคะแนนลง Google Sheet เรียบร้อย!';
+          statusEl.className = 'text-center text-sm font-bold my-2 min-h-[20px] text-green-400';
+        }
+      } catch {
+        if (statusEl) {
+          statusEl.textContent = '❌ บันทึกไม่สำเร็จ';
+          statusEl.className = 'text-center text-sm font-bold my-2 min-h-[20px] text-red-400';
+        }
+      }
+    }
+
+    // --- Load Past Players for Autocomplete ---
+    async function loadPastPlayers() {
+      if (!SHEET_URL || SHEET_URL.includes('YOUR_SCRIPT_ID')) return;
+      try {
+        const res = await fetch(`${SHEET_URL}?t=${Date.now()}`);
+        const rows = await res.json();
+        const names = [...new Set(rows.slice(1).map(r => r[1]).filter(Boolean))];
+        const dl = document.getElementById('past-players-list');
+        dl.innerHTML = names.map(n => `<option value="${n}">`).join('');
+      } catch { /* silently ignore */ }
+    }
+
+    // --- Dashboard ---
+    function showDashboard(backTo) {
+      const dash = document.getElementById('dashboard-screen');
+      dash.classList.remove('hidden');
+      dash.style.display = 'flex';
+      dash.dataset.backTo = backTo || 'welcome';
+      loadRankings();
+    }
+
+    async function loadRankings() {
+      const statusEl = document.getElementById('dash-load-status');
+      const tbody = document.getElementById('ranking-table-body');
+      const noNotice = document.getElementById('no-sheet-notice');
+
+      if (!SHEET_URL || SHEET_URL.includes('YOUR_SCRIPT_ID')) {
+        noNotice.classList.remove('hidden');
+        statusEl.textContent = 'ไม่มี URL';
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center py-12 text-white/30">ยังไม่ได้ตั้งค่า SHEET_URL</td></tr>';
+        return;
+      }
+      noNotice.classList.add('hidden');
+      statusEl.textContent = '⏳ กำลังโหลด…';
+
+      try {
+        const res = await fetch(`${SHEET_URL}?t=${Date.now()}`);
+        const rows = await res.json();
+        // schema: [date(0), name(1), cls(2), num(3), total(4), s1(5),s2(6),s3(7),s4(8),s5(9), time(10)]
+        const dataRows = rows.slice(1).filter(r => r[1]);
+        dataRows.sort((a, b) => (Number(b[4]) || 0) - (Number(a[4]) || 0));
+
+        document.getElementById('dash-total-games').textContent = dataRows.length;
+        const scores = dataRows.map(r => Number(r[4]) || 0);
+        document.getElementById('dash-top-score').textContent = scores.length ? Math.max(...scores) : 0;
+        document.getElementById('dash-avg-score').textContent = scores.length ? Math.round(scores.reduce((a,b)=>a+b,0)/scores.length) : 0;
+
+        if (!dataRows.length) {
+          tbody.innerHTML = '<tr><td colspan="9" class="text-center py-12 text-white/30">ยังไม่มีข้อมูลการเล่น</td></tr>';
+          statusEl.textContent = 'โหลดสำเร็จ — ยังไม่มีข้อมูล';
+          return;
+        }
+
+        const medals = ['🥇', '🥈', '🥉'];
+        tbody.innerHTML = dataRows.map((r, i) => {
+          const rank = i < 3 ? medals[i] : `#${i + 1}`;
+          // schema: date(0),name(1),cls(2),num(3),total(4),s1-s5(5-9),time(10),stages(11),status(12)
+          const stages = Number(r[11]) || 0;
+          const status = r[12] || 'จบเกม';
+          const isComplete = status === 'จบเกม';
+          const statusBadge = isComplete
+            ? `<span class="px-2 py-0.5 bg-green-500/30 rounded-full text-green-300 text-xs">✅ จบเกม</span>`
+            : `<span class="px-2 py-0.5 bg-red-500/20 rounded-full text-red-300 text-xs">⏰ ${status}</span>`;
+          const dateStr = r[0] ? String(r[0]).replace('T',' ').replace(/\.\d+Z$/,'') : '-';
+          return `
+            <tr class="border-t border-white/5 hover:bg-white/5 transition-colors">
+              <td class="px-4 py-3 text-center text-lg">${rank}</td>
+              <td class="px-4 py-3 font-semibold text-white">${r[1]||'-'}</td>
+              <td class="px-4 py-3 text-center text-white/70">${r[2]||'-'}</td>
+              <td class="px-4 py-3 text-center text-white/70">${r[3]||'-'}</td>
+              <td class="px-4 py-3 text-center font-black text-2xl text-yellow-300">${Number(r[4])||0}</td>
+              <td class="px-4 py-3 text-center font-bold text-white/80">${stages} / 5</td>
+              <td class="px-4 py-3 text-center">${statusBadge}</td>
+              <td class="px-4 py-3 text-center text-white/70">${Number(r[10])||0} วิ</td>
+              <td class="px-4 py-3 text-center text-white/40 text-xs hidden md:table-cell">${dateStr}</td>
+            </tr>`;
+        }).join('');
+        statusEl.textContent = `โหลดสำเร็จ — ${dataRows.length} รายการ`;
+      } catch {
+        statusEl.textContent = '❌ โหลดข้อมูลไม่สำเร็จ';
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center py-12 text-red-400/60">ไม่สามารถดึงข้อมูลได้</td></tr>';
+      }
+    }
+
+    // --- Dashboard Navigation ---
+    document.getElementById('dashboard-btn').addEventListener('click', () => showDashboard('welcome'));
+    document.getElementById('final-dashboard-btn').addEventListener('click', () => showDashboard('final'));
+    document.getElementById('dash-refresh-btn').addEventListener('click', loadRankings);
+    document.getElementById('dash-back-btn').addEventListener('click', () => {
+      document.getElementById('dashboard-screen').classList.add('hidden');
+      document.getElementById('dashboard-screen').style.display = '';
+      const backTo = document.getElementById('dashboard-screen').dataset.backTo;
+      if (backTo === 'final') {
+        document.getElementById('final-summary-modal').classList.remove('hidden');
+      } else {
+        document.getElementById('welcome-modal').classList.remove('hidden');
+      }
+    });
+
+    // Load past players on page load
+    loadPastPlayers();
 
   </script>
 </body>
